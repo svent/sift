@@ -50,13 +50,13 @@ inline void bytes_to_lower(const unsigned char *buf, unsigned char *out, int n) 
 	int dist = n / 4;
 	for (int i = 0; i < dist; i++) {
 		base = i * 4;
-		out[base] = (buf[base] - 65U <= 26) ? buf[base] + 32 : buf[base];
-		out[base+1] = (buf[base+1] - 65U <= 26) ? buf[base+1] + 32 : buf[base+1];
-		out[base+2] = (buf[base+2] - 65U <= 26) ? buf[base+2] + 32 : buf[base+2];
-		out[base+3] = (buf[base+3] - 65U <= 26) ? buf[base+3] + 32 : buf[base+3];
+		out[base] = (buf[base] - 65U < 26) ? buf[base] + 32 : buf[base];
+		out[base+1] = (buf[base+1] - 65U < 26) ? buf[base+1] + 32 : buf[base+1];
+		out[base+2] = (buf[base+2] - 65U < 26) ? buf[base+2] + 32 : buf[base+2];
+		out[base+3] = (buf[base+3] - 65U < 26) ? buf[base+3] + 32 : buf[base+3];
 	}
 	for (int i = (n / 4) * 4; i < n; i++) {
-		out[i] = (buf[i] - 65U <= 26) ? buf[i] + 32 : buf[i];
+		out[i] = (buf[i] - 65U < 26) ? buf[i] + 32 : buf[i];
 	}
 }
 */
