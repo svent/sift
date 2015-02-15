@@ -18,7 +18,9 @@ package main
 /*
 #cgo CFLAGS: -std=gnu99 -O2 -funroll-loops
 
-inline int count_newlines(const unsigned char *buf, int n) {
+#include <stddef.h>
+
+inline int count_newlines(const unsigned char *buf, size_t n) {
 	int count = 0;
 	int base;
 	int dist = n / 4;
@@ -45,7 +47,7 @@ inline int count_newlines(const unsigned char *buf, int n) {
 	return count;
 }
 
-inline void bytes_to_lower(const unsigned char *buf, unsigned char *out, int n) {
+inline void bytes_to_lower(const unsigned char *buf, unsigned char *out, size_t n) {
 	int base;
 	int dist = n / 4;
 	for (int i = 0; i < dist; i++) {
@@ -63,9 +65,9 @@ inline void bytes_to_lower(const unsigned char *buf, unsigned char *out, int n) 
 import "C"
 
 func countNewlines(input []byte, length int) int {
-	return int(C.count_newlines((*C.uchar)(&input[0]), C.int(length)))
+	return int(C.count_newlines((*C.uchar)(&input[0]), C.size_t(length)))
 }
 
 func bytesToLower(input []byte, output []byte, length int) {
-	C.bytes_to_lower((*C.uchar)(&input[0]), (*C.uchar)(&output[0]), C.int(length))
+	C.bytes_to_lower((*C.uchar)(&input[0]), (*C.uchar)(&output[0]), C.size_t(length))
 }
