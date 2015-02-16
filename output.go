@@ -246,6 +246,7 @@ func printResult(result *Result) {
 
 	if result.isBinary && !options.BinarySkip && !options.BinaryAsText {
 		writeOutput("Binary file matches: %s\n", result.target)
+		global.totalMatchCount++
 		return
 
 	}
