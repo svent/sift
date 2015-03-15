@@ -43,11 +43,15 @@ type Options struct {
 	Cores              int      `short:"j" long:"cores" description:"limit used CPU Cores (default: 0 = all)" default-mask:"-"`
 	Count              bool     `short:"c" long:"count" description:"print count of matches per file" json:"-"`
 	IncludeDirs        []string `long:"dirs" description:"recurse only into directories whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
-	IncludeFiles       []string `long:"files" description:"search only files whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
-	IncludePath        string   `long:"path" description:"search only files whose path matches PATTERN" value-name:"PATTERN" default-mask:"-"`
 	ExcludeDirs        []string `long:"exclude-dirs" description:"do not recurse into directories whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
+	IncludeExtensions  string   `short:"x" long:"ext" description:"limit search to specific file extensions (comma-separated)" default-mask:"-"`
+	ExcludeExtensions  string   `short:"X" long:"exclude-ext" description:"exclude specific file extensions (comma-separated)" default-mask:"-"`
+	IncludeFiles       []string `long:"files" description:"search only files whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
 	ExcludeFiles       []string `long:"exclude-files" description:"do not select files whose name matches GLOB while recursing" value-name:"GLOB" default-mask:"-"`
+	IncludePath        string   `long:"path" description:"search only files whose path matches PATTERN" value-name:"PATTERN" default-mask:"-"`
 	ExcludePath        string   `long:"exclude-path" description:"do not select files whose path matches PATTERN while recursing" value-name:"PATTERN" default-mask:"-"`
+	IncludeTypes       string   `short:"t" long:"type" description:"limit search to specific file types (comma-separated, see --list-types)" default-mask:"-"`
+	ExcludeTypes       string   `short:"T" long:"no-type" description:"exlcude specific file types (comma-separated, --list-types)" default-mask:"-"`
 	IgnoreCase         bool     `short:"i" long:"ignore-case" description:"case insensitive (default: off)"`
 	NoIgnoreCase       func()   `short:"I" long:"no-ignore-case" description:"disable case insensitive" json:"-"`
 	InvertMatch        bool     `short:"v" long:"invert-match" description:"select non-matching lines" json:"-"`
@@ -58,26 +62,24 @@ type Options struct {
 	Output             string   `short:"o" long:"output" description:"write output to the specified file or network connection" value-name:"FILE|tcp://HOST:PORT" json:"-"`
 	OutputLimit        int      `long:"output-limit" description:"limit output length per found match" default-mask:"-"`
 	OutputSeparator    string   `long:"output-sep" description:"output separator (default: \"\\n\")" default-mask:"-" json:"-"`
-	Patterns           []string `short:"e" long:"regexp" description:"add pattern PATTERN to the search" value-name:"PATTERN" default-mask:"-"`
-	PatternFile        string   `short:"f" long:"regexp-file" description:"search for patterns contained in FILE (one per line)" value-name:"FILE" default-mask:"-"`
+	Patterns           []string `short:"e" long:"regexp" description:"add pattern PATTERN to the search" value-name:"PATTERN" default-mask:"-" json:"-"`
+	PatternFile        string   `short:"f" long:"regexp-file" description:"search for patterns contained in FILE (one per line)" value-name:"FILE" default-mask:"-" json:"-"`
 	PrintConfig        bool     `long:"print-config" description:"print config for loaded configs + given command line arguments" json:"-"`
 	Quiet              bool     `short:"q" long:"quiet" description:"suppress output, exit with return code zero if any match is found" json:"-"`
 	Recursive          bool     `short:"r" long:"recursive" description:"recurse into directories (default: on)"`
 	NoRecursive        func()   `short:"R" long:"no-recursive" description:"do not recurse into directories" json:"-"`
 	Replace            string   `long:"replace" description:"replace matches. Use ${1}, ${2}, $name, ... for captured submatches" json:"-"`
 	ShowFilename       string
-	ShowFilenameFunc   func()   `long:"filename" description:"enforce printing the filename before results (default: auto)" json:"-"`
-	NoShowFilenameFunc func()   `long:"no-filename" description:"disable printing the filename before results" json:"-"`
-	ShowLineNumbers    bool     `short:"n" long:"line-number" description:"show line numbers (default: off)"`
-	NoShowLineNumbers  func()   `short:"N" long:"no-line-number" description:"do not show line numbers" json:"-"`
-	Stats              bool     `long:"stats" description:"show statistics"`
-	Types              []string `short:"t" long:"type" description:"limit search to specific file types, see --list-types" default-mask:"-"`
-	ExcludeTypes       []string `short:"T" long:"no-type" description:"exlcude specific file types, see --list-types" default-mask:"-"`
-	ListTypes          func()   `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
-	Version            func()   `short:"V" long:"version" description:"show version and license information" json:"-"`
-	WriteConfig        bool     `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
-	Zip                bool     `short:"z" long:"zip" description:"search content of compressed .gz files (default: off)" json:"zip"`
-	NoZip              func()   `short:"Z" long:"no-zip" description:"do not search content of compressed .gz files" json:"-"`
+	ShowFilenameFunc   func() `long:"filename" description:"enforce printing the filename before results (default: auto)" json:"-"`
+	NoShowFilenameFunc func() `long:"no-filename" description:"disable printing the filename before results" json:"-"`
+	ShowLineNumbers    bool   `short:"n" long:"line-number" description:"show line numbers (default: off)"`
+	NoShowLineNumbers  func() `short:"N" long:"no-line-number" description:"do not show line numbers" json:"-"`
+	Stats              bool   `long:"stats" description:"show statistics"`
+	ListTypes          func() `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
+	Version            func() `short:"V" long:"version" description:"show version and license information" json:"-"`
+	WriteConfig        bool   `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
+	Zip                bool   `short:"z" long:"zip" description:"search content of compressed .gz files (default: off)" json:"zip"`
+	NoZip              func() `short:"Z" long:"no-zip" description:"do not search content of compressed .gz files" json:"-"`
 
 	FileConditions struct {
 		FileMatches     []string `long:"file-matches" description:"only show matches if file also matches PATTERN" value-name:"PATTERN"`
@@ -253,14 +255,18 @@ func (o *Options) checkFormats() error {
 		}
 	}
 
-	for _, t := range o.Types {
-		if _, ok := global.fileTypesMap[t]; !ok {
-			return fmt.Errorf("file type '%s' is not specified. See --list-types for a list of available file types", t)
+	if len(o.IncludeTypes) > 0 {
+		for _, t := range strings.Split(o.IncludeTypes, ",") {
+			if _, ok := global.fileTypesMap[t]; !ok {
+				return fmt.Errorf("file type '%s' is not specified. See --list-types for a list of available file types", t)
+			}
 		}
 	}
-	for _, t := range o.ExcludeTypes {
-		if _, ok := global.fileTypesMap[t]; !ok {
-			return fmt.Errorf("file type '%s' is not specified. See --list-types for a list of available file types", t)
+	if len(o.ExcludeTypes) > 0 {
+		for _, t := range strings.Split(o.ExcludeTypes, ",") {
+			if _, ok := global.fileTypesMap[t]; !ok {
+				return fmt.Errorf("file type '%s' is not specified. See --list-types for a list of available file types", t)
+			}
 		}
 	}
 

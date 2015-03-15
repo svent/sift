@@ -213,6 +213,24 @@ nextEntry:
 			}
 		}
 
+		// check file extension options
+		if len(options.ExcludeExtensions) > 0 {
+			for _, e := range strings.Split(options.ExcludeExtensions, ",") {
+				if filepath.Ext(fi.Name()) == "."+e {
+					continue nextEntry
+				}
+			}
+		}
+		if len(options.IncludeExtensions) > 0 {
+			for _, e := range strings.Split(options.IncludeExtensions, ",") {
+				if filepath.Ext(fi.Name()) == "."+e {
+					goto includeExtensionFound
+				}
+			}
+			continue nextEntry
+		includeExtensionFound:
+		}
+
 		// check file include/exclude options
 		for _, filePattern := range options.ExcludeFiles {
 			matched, err := filepath.Match(filePattern, fi.Name())
@@ -239,7 +257,7 @@ nextEntry:
 
 		// check file type options
 		if len(options.ExcludeTypes) > 0 {
-			for _, t := range options.ExcludeTypes {
+			for _, t := range strings.Split(options.ExcludeTypes, ",") {
 				for _, filePattern := range global.fileTypesMap[t].Patterns {
 					if matched, _ := filepath.Match(filePattern, fi.Name()); matched {
 						continue nextEntry
@@ -253,8 +271,8 @@ nextEntry:
 				}
 			}
 		}
-		if len(options.Types) > 0 {
-			for _, t := range options.Types {
+		if len(options.IncludeTypes) > 0 {
+			for _, t := range strings.Split(options.IncludeTypes, ",") {
 				for _, filePattern := range global.fileTypesMap[t].Patterns {
 					if matched, _ := filepath.Match(filePattern, fi.Name()); matched {
 						goto includeTypeFound
