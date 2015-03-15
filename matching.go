@@ -213,6 +213,9 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 					resultStreaming = true
 					matchChan = make(chan Matches, 16)
 					global.resultsChan <- &Result{target: target, matches: matches, streaming: true, matchChan: matchChan, isBinary: resultIsBinary}
+					defer func() {
+						close(matchChan)
+					}()
 				}
 			}
 
@@ -233,8 +236,6 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 
 	if !resultStreaming {
 		global.resultsChan <- &Result{target: target, matches: matches, conditionMatches: conditionMatches, streaming: false, isBinary: resultIsBinary}
-	} else {
-		close(matchChan)
 	}
 	return nil
 }
