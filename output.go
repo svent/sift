@@ -205,7 +205,7 @@ func printResult(result *Result) {
 	target := result.target
 	matches := result.matches
 	if options.ListFiles && !options.Count {
-		if len(matches) > 0 || (options.InvertMatch && len(matches) == 0) {
+		if len(matches) > 0 {
 			writeOutput("%s\n", target)
 			global.totalMatchCount++
 		}
