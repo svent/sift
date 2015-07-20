@@ -204,10 +204,18 @@ func printResult(result *Result) {
 	var matchCount int64
 	target := result.target
 	matches := result.matches
-	if options.ListFiles && !options.Count {
+	if options.FilesWithoutMatch {
+		if len(matches) == 0 {
+			writeOutput("%s\n", target)
+			global.totalResultCount++
+		}
+		return
+	}
+	if options.FilesWithMatches && !options.Count {
 		if len(matches) > 0 {
 			writeOutput("%s\n", target)
 			global.totalMatchCount++
+			global.totalResultCount++
 		}
 		return
 	}
@@ -226,17 +234,20 @@ func printResult(result *Result) {
 				}
 			}
 		}
-		if options.ListFiles {
-			if len(matches) > 0 {
+		if options.FilesWithMatches {
+			if matchCount > 0 {
 				writeOutput("%s:%d\n", target, matchCount)
 			}
 		} else {
 			if options.ShowFilename == "on" {
-				writeOutput("%s:", result.target)
+				writeOutput("%s:", target)
 			}
 			writeOutput("%d\n", matchCount)
 		}
 		global.totalMatchCount += matchCount
+		if matchCount > 0 {
+			global.totalResultCount++
+		}
 		return
 	}
 
@@ -247,6 +258,7 @@ func printResult(result *Result) {
 	if result.isBinary && !options.BinarySkip && !options.BinaryAsText {
 		writeOutput("Binary file matches: %s\n", result.target)
 		global.totalMatchCount++
+		global.totalResultCount++
 		return
 
 	}
@@ -316,4 +328,5 @@ func printResult(result *Result) {
 	}
 
 	global.totalMatchCount += matchCount
+	global.totalResultCount++
 }

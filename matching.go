@@ -198,8 +198,8 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 		}
 
 		if len(newMatches) > 0 {
-			// if option --list-files is used, exit here if possible
-			if options.ListFiles && !options.Count && len(global.conditions) == 0 {
+			// if a list option is used exit here if possible
+			if (options.FilesWithMatches || options.FilesWithoutMatch) && !options.Count && len(global.conditions) == 0 {
 				global.resultsChan <- &Result{target: target, matches: []Match{Match{}}}
 				return nil
 			}
@@ -594,7 +594,7 @@ func getAfterContextFromFile(target string, offset int64, end int) *string {
 	return nil
 }
 
-// processInvertMatchesReader is used to handle '--invert' option.
+// processInvertMatchesReader is used to handle the '--invert' option.
 // This function works line based and provides very limited support for options.
 func processReaderInvertMatch(reader io.Reader, matchRegexes []*regexp.Regexp, target string) error {
 	matches := make([]Match, 0, 16)
@@ -611,7 +611,7 @@ func processReaderInvertMatch(reader io.Reader, matchRegexes []*regexp.Regexp, t
 			}
 		}
 		if !matchFound {
-			if options.ListFiles {
+			if options.FilesWithMatches || options.FilesWithoutMatch {
 				global.resultsChan <- &Result{matches: []Match{Match{}}, target: target}
 				return nil
 			}

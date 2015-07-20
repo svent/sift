@@ -139,6 +139,7 @@ var global = struct {
 	termHighlightMatch    string
 	termHighlightReset    string
 	totalMatchCount       int64
+	totalResultCount      int64
 	totalTargetCount      int64
 }{
 	outputFile:         os.Stdout,
@@ -408,6 +409,7 @@ func executeSearch(targets []string) (ret int, err error) {
 	global.resultsDoneChan = make(chan struct{})
 	global.totalTargetCount = 0
 	global.totalMatchCount = 0
+	global.totalResultCount = 0
 	go resultHandler()
 
 	for i := 0; i < options.Cores; i++ {
@@ -446,7 +448,7 @@ func executeSearch(targets []string) (ret int, err error) {
 	<-global.resultsDoneChan
 
 	var retVal int
-	if global.totalMatchCount > 0 {
+	if global.totalResultCount > 0 {
 		retVal = 0
 	} else {
 		retVal = 1
@@ -455,6 +457,7 @@ func executeSearch(targets []string) (ret int, err error) {
 	if options.Stats {
 		tend := time.Now()
 		fmt.Fprintln(os.Stderr, global.totalTargetCount, "files processed")
+		fmt.Fprintln(os.Stderr, global.totalResultCount, "files match")
 		fmt.Fprintln(os.Stderr, global.totalMatchCount, "matches found")
 		fmt.Fprintf(os.Stderr, "in %v\n", tend.Sub(tstart))
 	}

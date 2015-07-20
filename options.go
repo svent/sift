@@ -52,11 +52,12 @@ type Options struct {
 	ExcludePath        string   `long:"exclude-path" description:"do not select files whose path matches PATTERN while recursing" value-name:"PATTERN" default-mask:"-"`
 	IncludeTypes       string   `short:"t" long:"type" description:"limit search to specific file types (comma-separated, see --list-types)" default-mask:"-"`
 	ExcludeTypes       string   `short:"T" long:"no-type" description:"exlcude specific file types (comma-separated, --list-types)" default-mask:"-"`
+	FilesWithMatches   bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
+	FilesWithoutMatch  bool     `short:"L" long:"files-without-match" description:"list files containing no match"`
 	IgnoreCase         bool     `short:"i" long:"ignore-case" description:"case insensitive (default: off)"`
 	NoIgnoreCase       func()   `short:"I" long:"no-ignore-case" description:"disable case insensitive" json:"-"`
 	InvertMatch        bool     `short:"v" long:"invert-match" description:"select non-matching lines" json:"-"`
 	Limit              int64    `long:"limit" description:"only show first NUM matches per file" value-name:"NUM" default-mask:"-"`
-	ListFiles          bool     `short:"l" long:"list-files" description:"list files only"`
 	Multiline          bool     `short:"m" long:"multiline" description:"multiline parsing (default: off)"`
 	NoMultiline        func()   `short:"M" long:"no-multiline" description:"disable multiline parsing" json:"-"`
 	Output             string   `short:"o" long:"output" description:"write output to the specified file or network connection" value-name:"FILE|tcp://HOST:PORT" json:"-"`
@@ -446,8 +447,12 @@ func (o *Options) checkCompatibility(targets []string) error {
 		return errors.New("context options are not supported when reading from STDIN or network")
 	}
 
-	if (o.ContextBefore != 0 || o.ContextAfter != 0) && (o.Count || o.ListFiles) {
+	if (o.ContextBefore != 0 || o.ContextAfter != 0) && (o.Count || o.FilesWithMatches || o.FilesWithoutMatch) {
 		return errors.New("context options cannot be combined with count or list option")
+	}
+
+	if o.FilesWithMatches && o.FilesWithoutMatch {
+		return errors.New("illegal combination of list option")
 	}
 
 	if o.Zip && (o.ContextBefore != 0 || o.ContextAfter != 0) {
