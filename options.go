@@ -110,7 +110,7 @@ type Options struct {
 // LoadDefaults sets default options and tries to load options from sift config files.
 func (o *Options) LoadDefaults() {
 	o.Cores = runtime.NumCPU()
-	o.OutputSeparator = "\n"
+	o.OutputSeparator = ""
 	o.ShowFilename = "auto"
 	o.Color = "auto"
 	o.Recursive = true
@@ -269,6 +269,16 @@ func (o *Options) checkFormats() error {
 				return fmt.Errorf("file type '%s' is not specified. See --list-types for a list of available file types", t)
 			}
 		}
+	}
+
+	if o.OutputSeparator == "" {
+		o.OutputSeparator = "\n"
+	} else {
+		sep, err := strconv.Unquote("\"" + o.OutputSeparator + "\"")
+		if err != nil {
+			return fmt.Errorf("cannot parse output separator '%s': %s\n", o.OutputSeparator, err)
+		}
+		o.OutputSeparator = sep
 	}
 
 	if o.Output != "" {
