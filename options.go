@@ -79,7 +79,7 @@ type Options struct {
 	ListTypes          func() `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
 	Version            func() `short:"V" long:"version" description:"show version and license information" json:"-"`
 	WriteConfig        bool   `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
-	Zip                bool   `short:"z" long:"zip" description:"search content of compressed .gz files (default: off)" json:"zip"`
+	Zip                bool   `short:"z" long:"zip" description:"search content of compressed .gz files (default: off)"`
 	NoZip              func() `short:"Z" long:"no-zip" description:"do not search content of compressed .gz files" json:"-"`
 
 	FileConditions struct {
