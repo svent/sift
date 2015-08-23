@@ -245,7 +245,7 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 // data contains the original data.
 // testBuffer contains the data to test the regex against (potentially modified, e.g. to support the ignore case option).
 // length contains the length of the provided data.
-// matches are only valid if they start withing the validMatchRange.
+// matches are only valid if they start within the validMatchRange.
 func getMatches(regex *regexp.Regexp, data []byte, testBuffer []byte, offset int64, length int, validMatchRange int, conditionID int, target string) Matches {
 	var matches Matches
 	if allIndex := regex.FindAllIndex(testBuffer, -1); allIndex != nil {
@@ -480,17 +480,29 @@ MatchLoop:
 			switch global.conditions[conditionMatch.conditionID].conditionType {
 			case ConditionPreceded:
 				actualDistance = lineno - conditionMatch.lineno
-				conditionFulfilled = (actualDistance >= 1) && (maxAllowedDistance == 0 || actualDistance <= maxAllowedDistance)
+				if actualDistance == 0 {
+					conditionFulfilled = conditionMatch.start < match.start
+				} else {
+					conditionFulfilled = (actualDistance >= 0) && (maxAllowedDistance == -1 || actualDistance <= maxAllowedDistance)
+				}
 			case ConditionFollowed:
 				actualDistance = conditionMatch.lineno - lineno
-				conditionFulfilled = (actualDistance >= 1) && (maxAllowedDistance == 0 || actualDistance <= maxAllowedDistance)
+				if actualDistance == 0 {
+					conditionFulfilled = conditionMatch.start > match.start
+				} else {
+					conditionFulfilled = (actualDistance >= 0) && (maxAllowedDistance == -1 || actualDistance <= maxAllowedDistance)
+				}
 			case ConditionSurrounded:
 				if lineno > conditionMatch.lineno {
 					actualDistance = lineno - conditionMatch.lineno
 				} else {
 					actualDistance = conditionMatch.lineno - lineno
 				}
-				conditionFulfilled = (actualDistance >= 1) && (maxAllowedDistance == 0 || actualDistance <= maxAllowedDistance)
+				if actualDistance == 0 {
+					conditionFulfilled = true
+				} else {
+					conditionFulfilled = (actualDistance >= 0) && (maxAllowedDistance == -1 || actualDistance <= maxAllowedDistance)
+				}
 			default:
 				// ingore other condition types
 				conditionFulfilled = !global.conditions[conditionMatch.conditionID].negated

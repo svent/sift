@@ -329,7 +329,7 @@ func (o *Options) processConditions() error {
 			if err != nil {
 				return fmt.Errorf("cannot parse condition pattern '%s': %s\n", pattern, err)
 			}
-			global.conditions = append(global.conditions, Condition{regex: regex, conditionType: conditionDirections[i%3], within: 0, negated: i >= 3})
+			global.conditions = append(global.conditions, Condition{regex: regex, conditionType: conditionDirections[i%3], within: -1, negated: i >= 3})
 		}
 	}
 
@@ -346,8 +346,8 @@ func (o *Options) processConditions() error {
 			if err != nil {
 				return fmt.Errorf("cannot parse condition option '%s': '%s' is not a number\n", arg, s[0])
 			}
-			if within < 1 {
-				return fmt.Errorf("distance value must be > 0\n")
+			if within < 0 {
+				return fmt.Errorf("distance value must be >= 0\n")
 			}
 			regex, err := regexp.Compile(o.preparePattern(s[1]))
 			if err != nil {
