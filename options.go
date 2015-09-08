@@ -144,7 +144,7 @@ func (o *Options) LoadDefaults() {
 	}
 	o.Version = func() {
 		fmt.Println("sift", SiftVersion)
-		fmt.Println("Copyright (C) 2014 Sven Taute")
+		fmt.Println("Copyright (C) 2014-2015 Sven Taute")
 		fmt.Println("")
 		fmt.Println("This program is free software: you can redistribute it and/or modify")
 		fmt.Println("it under the terms of the GNU General Public License as published by")
