@@ -107,6 +107,21 @@ type Options struct {
 	} `group:"Match Condition options" json:"-"`
 }
 
+func getHomeDir() string {
+	var home string
+	if runtime.GOOS == "windows" {
+		home = os.Getenv("USERPROFILE")
+	} else {
+		home = os.Getenv("HOME")
+	}
+	if home == "" {
+		if u, err := user.Current(); err == nil {
+			home = u.HomeDir
+		}
+	}
+	return home
+}
+
 // LoadDefaults sets default options and tries to load options from sift config files.
 func (o *Options) LoadDefaults() {
 	o.Cores = runtime.NumCPU()
@@ -181,8 +196,8 @@ func (o *Options) LoadDefaults() {
 	}
 
 	// load config from global sift config if file exists
-	if user, err := user.Current(); err == nil {
-		configFilePath := filepath.Join(user.HomeDir, SiftConfigFile)
+	if homedir := getHomeDir(); homedir != "" {
+		configFilePath := filepath.Join(homedir, SiftConfigFile)
 		configFile, err := ioutil.ReadFile(configFilePath)
 		if err == nil && len(configFile) > 0 {
 			if err := json.Unmarshal(configFile, &o); err != nil {
@@ -494,8 +509,8 @@ func (o *Options) checkCompatibility(targets []string) error {
 // processConfigOptions processes the options --print-config and --write-config
 func (o *Options) processConfigOptions() error {
 	if o.PrintConfig {
-		if user, err := user.Current(); err == nil {
-			globalConfigFilePath := filepath.Join(user.HomeDir, SiftConfigFile)
+		if homedir := getHomeDir(); homedir != "" {
+			globalConfigFilePath := filepath.Join(homedir, SiftConfigFile)
 			fmt.Fprintf(os.Stderr, "Global config file path: %s\n", globalConfigFilePath)
 		} else {
 			errorLogger.Println("could not detect user home directory.")
