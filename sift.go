@@ -46,7 +46,7 @@ const (
 	// as a complete chunk for multiline matching
 	MultilinePipeChunkTimeout = 150 * time.Millisecond
 	SiftConfigFile            = ".sift.conf"
-	SiftVersion               = "0.3.1"
+	SiftVersion               = "0.3.2"
 )
 
 type ConditionType int
