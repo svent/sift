@@ -122,6 +122,30 @@ func getHomeDir() string {
 	return home
 }
 
+// findLocalConfig returns the path to the local config file.
+// It searches the current directory and all parent directories for a config file.
+// If no config file is found, findLocalConfig returns an empty string.
+func findLocalConfig() string {
+	curdir, err := os.Getwd()
+	if err != nil {
+		curdir = "."
+	}
+	path, err := filepath.Abs(curdir)
+	if err != nil || path == "" {
+		return ""
+	}
+	lp := ""
+	for path != lp {
+		confpath := filepath.Join(path, SiftConfigFile)
+		if _, err := os.Stat(confpath); err == nil {
+			return confpath
+		}
+		lp = path
+		path = filepath.Dir(path)
+	}
+	return ""
+}
+
 // LoadDefaults sets default options and tries to load options from sift config files.
 func (o *Options) LoadDefaults() {
 	o.Cores = runtime.NumCPU()
@@ -207,15 +231,12 @@ func (o *Options) LoadDefaults() {
 	}
 
 	// load config from local sift config if file exists
-	curdir, err := os.Getwd()
-	if err != nil {
-		curdir = "."
-	}
-	configFilePath := filepath.Join(curdir, SiftConfigFile)
-	configFile, err := ioutil.ReadFile(configFilePath)
-	if err == nil && len(configFile) > 0 {
-		if err := json.Unmarshal(configFile, &o); err != nil {
-			errorLogger.Printf("cannot parse local config '%s': %s\n", configFilePath, err)
+	if configFilePath := findLocalConfig(); configFilePath != "" {
+		configFile, err := ioutil.ReadFile(configFilePath)
+		if err == nil && len(configFile) > 0 {
+			if err := json.Unmarshal(configFile, &o); err != nil {
+				errorLogger.Printf("cannot parse local config '%s': %s\n", configFilePath, err)
+			}
 		}
 	}
 }
@@ -516,12 +537,12 @@ func (o *Options) processConfigOptions() error {
 			errorLogger.Println("could not detect user home directory.")
 		}
 
-		curdir, err := os.Getwd()
-		if err != nil {
-			curdir = "."
+		localConfigFilePath := findLocalConfig()
+		if localConfigFilePath != "" {
+			fmt.Fprintf(os.Stderr, "Local config file path: %s\n", localConfigFilePath)
+		} else {
+			fmt.Fprintf(os.Stderr, "No local config file found.\n")
 		}
-		localConfigFilePath := filepath.Join(curdir, SiftConfigFile)
-		fmt.Fprintf(os.Stderr, "Local config file path: %s\n", localConfigFilePath)
 
 		conf, err := json.MarshalIndent(o, "", "    ")
 		if err != nil {
@@ -533,15 +554,12 @@ func (o *Options) processConfigOptions() error {
 
 	if o.WriteConfig {
 		var configFilePath string
-		curdir, err := os.Getwd()
-		if err != nil {
-			curdir = "."
-		}
-		if _, err := os.Stat(filepath.Join(curdir, SiftConfigFile)); err == nil {
-			configFilePath = filepath.Join(curdir, SiftConfigFile)
+		localConfigFilePath := findLocalConfig()
+		if localConfigFilePath != "" {
+			configFilePath = localConfigFilePath
 		} else {
-			if user, err := user.Current(); err == nil {
-				configFilePath = filepath.Join(user.HomeDir, SiftConfigFile)
+			if homedir := getHomeDir(); homedir != "" {
+				configFilePath = filepath.Join(homedir, SiftConfigFile)
 			} else {
 				return errors.New("could not detect user home directory")
 			}
