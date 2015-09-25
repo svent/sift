@@ -51,7 +51,7 @@ type Options struct {
 	IncludePath        string   `long:"path" description:"search only files whose path matches PATTERN" value-name:"PATTERN" default-mask:"-"`
 	ExcludePath        string   `long:"exclude-path" description:"do not select files whose path matches PATTERN while recursing" value-name:"PATTERN" default-mask:"-"`
 	IncludeTypes       string   `short:"t" long:"type" description:"limit search to specific file types (comma-separated, see --list-types)" default-mask:"-"`
-	ExcludeTypes       string   `short:"T" long:"no-type" description:"exlcude specific file types (comma-separated, --list-types)" default-mask:"-"`
+	ExcludeTypes       string   `short:"T" long:"no-type" description:"exclude specific file types (comma-separated, --list-types)" default-mask:"-"`
 	FilesWithMatches   bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
 	FilesWithoutMatch  bool     `short:"L" long:"files-without-match" description:"list files containing no match"`
 	IgnoreCase         bool     `short:"i" long:"ignore-case" description:"case insensitive (default: off)"`
