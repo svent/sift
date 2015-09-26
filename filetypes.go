@@ -33,6 +33,18 @@ func init() {
 			Name:     "html",
 			Patterns: []string{"*.htm", "*.html", "*.shtml", "*.xhtml"},
 		},
+		"groovy": FileType{
+			Name:     "groovy",
+			Patterns: []string{"*.groovy", "*.gtmpl", "*.gpp", "*.grunit", "*.gradle"},
+		},
+		"java": FileType{
+			Name:     "java",
+			Patterns: []string{"*.java", "*.properties"},
+		},
+		"jsp": FileType{
+			Name:     "jsp",
+			Patterns: []string{"*.jsp", "*.jspx", "*.jhtm", "*.jhtml"},
+		},
 		"perl": FileType{
 			Name:         "perl",
 			Patterns:     []string{"*.pl", "*.pm", "*.pod", "*.t"},
