@@ -54,6 +54,8 @@ type Options struct {
 	ExcludeTypes       string   `short:"T" long:"no-type" description:"exclude specific file types (comma-separated, --list-types)" default-mask:"-"`
 	FilesWithMatches   bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
 	FilesWithoutMatch  bool     `short:"L" long:"files-without-match" description:"list files containing no match"`
+	GroupByFile        bool     `long:"group" description:"group output by file (default: off)"`
+	NoGroupByFile      func()   `long:"no-group" description:"do not group output by file" json:"-"`
 	IgnoreCase         bool     `short:"i" long:"ignore-case" description:"case insensitive (default: off)"`
 	NoIgnoreCase       func()   `short:"I" long:"no-ignore-case" description:"disable case insensitive" json:"-"`
 	InvertMatch        bool     `short:"v" long:"invert-match" description:"select non-matching lines" json:"-"`
@@ -162,6 +164,9 @@ func (o *Options) LoadDefaults() {
 	}
 	o.NoIgnoreCase = func() {
 		o.IgnoreCase = false
+	}
+	o.NoGroupByFile = func() {
+		o.GroupByFile = false
 	}
 	o.NoMultiline = func() {
 		o.Multiline = false
@@ -515,6 +520,7 @@ func (o *Options) checkCompatibility(targets []string) error {
 		if len(targets) == 1 {
 			if stdinTargetFound || netTargetFound {
 				global.streamingThreshold = 0
+				o.GroupByFile = false
 			} else {
 				stat, err := os.Stat(targets[0])
 				if err == nil && stat.Mode()&os.ModeType == 0 {
@@ -591,8 +597,8 @@ func (o *Options) performAutoDetections(targets []string) {
 		} else {
 			o.ShowFilename = "on"
 		}
-		// }
 	}
+
 	if o.Color == "auto" {
 		// auto activate colored output only if STDOUT is a device,
 		// disable for files and pipes
@@ -605,6 +611,13 @@ func (o *Options) performAutoDetections(targets []string) {
 			}
 		} else {
 			o.Color = "off"
+		}
+	}
+
+	if o.GroupByFile {
+		stat, err := os.Stdout.Stat()
+		if err != nil || stat.Mode()&os.ModeDevice == 0 {
+			o.GroupByFile = false
 		}
 	}
 

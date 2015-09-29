@@ -38,7 +38,7 @@ func writeOutput(format string, a ...interface{}) {
 }
 
 func printFilename(filename string, delim string) {
-	if options.ShowFilename == "on" {
+	if options.ShowFilename == "on" && !options.GroupByFile {
 		writeOutput(global.termHighlightFilename+"%s"+global.termHighlightReset+delim, filename)
 	}
 }
@@ -265,9 +265,17 @@ func printResult(result *Result) {
 
 	// print separator between file results if this is not the first result
 	if global.totalMatchCount > 0 {
-		if options.ContextBefore > 0 || options.ContextAfter > 0 {
-			fmt.Fprintln(global.outputFile, "--")
+		if options.GroupByFile {
+			fmt.Fprintln(global.outputFile, "")
+		} else {
+			if options.ContextBefore > 0 || options.ContextAfter > 0 {
+				fmt.Fprintln(global.outputFile, "--")
+			}
 		}
+	}
+
+	if options.GroupByFile {
+		writeOutput(global.termHighlightFilename+"%s\n"+global.termHighlightReset, result.target)
 	}
 
 	var lastPrintedLine int64 = -1
