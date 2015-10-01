@@ -470,14 +470,20 @@ func main() {
 
 	options.LoadDefaults()
 
-	parser := flags.NewNamedParser("sift", flags.Default)
+	parser := flags.NewNamedParser("sift", flags.HelpFlag|flags.PassDoubleDash)
 	parser.AddGroup("Options", "Options", &options)
 	parser.Name = "sift"
 	parser.Usage = "[OPTIONS] PATTERN [FILE|PATH|tcp://HOST:PORT...]\n" +
 		"  sift [OPTIONS] [-e PATTERN | -f FILE] [FILE|PATH|tcp://HOST:PORT...]"
 	args, err := parser.Parse()
 	if err != nil {
-		os.Exit(2)
+		if e, ok := err.(*flags.Error); ok && e.Type == flags.ErrHelp {
+			fmt.Println(e.Error())
+			os.Exit(0)
+		} else {
+			errorLogger.Println(err)
+			os.Exit(2)
+		}
 	}
 
 	for _, pattern := range options.Patterns {
