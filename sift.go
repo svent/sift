@@ -531,6 +531,23 @@ func main() {
 		targets = args[0:len(args)]
 	}
 
+	// expand arguments containing patterns on Windows
+	if runtime.GOOS == "windows" {
+		targetsExpanded := []string{}
+		for _, t := range targets {
+			expanded, err := filepath.Glob(t)
+			if err == filepath.ErrBadPattern {
+				errorLogger.Fatalf("cannot parse argument '%s': %s\n", t, err)
+			}
+			if expanded != nil {
+				for _, e := range expanded {
+					targetsExpanded = append(targetsExpanded, e)
+				}
+			}
+		}
+		targets = targetsExpanded
+	}
+
 	if err := options.Apply(global.matchPatterns, targets); err != nil {
 		errorLogger.Fatalf("cannot process options: %s\n", err)
 	}
