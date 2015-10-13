@@ -21,6 +21,10 @@ import (
 
 func init() {
 	global.fileTypesMap = map[string]FileType{
+		"go": FileType{
+			Name:     "go",
+			Patterns: []string{"*.go"},
+		},
 		"cc": FileType{
 			Name:     "cc",
 			Patterns: []string{"*.c", "*.h", "*.xs"},
