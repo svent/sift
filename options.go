@@ -43,6 +43,7 @@ type Options struct {
 	Cores              int      `short:"j" long:"cores" description:"limit used CPU Cores (default: 0 = all)" default-mask:"-"`
 	Count              bool     `short:"c" long:"count" description:"print count of matches per file" json:"-"`
 	IncludeDirs        []string `long:"dirs" description:"recurse only into directories whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
+	ErrSkipLineLength  bool     `long:"err-skip-line-length" description:"skip line length errors"`
 	ExcludeDirs        []string `long:"exclude-dirs" description:"do not recurse into directories whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
 	IncludeExtensions  string   `short:"x" long:"ext" description:"limit search to specific file extensions (comma-separated)" default-mask:"-"`
 	ExcludeExtensions  string   `short:"X" long:"exclude-ext" description:"exclude specific file extensions (comma-separated)" default-mask:"-"`

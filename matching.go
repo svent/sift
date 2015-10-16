@@ -18,7 +18,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"regexp"
@@ -133,8 +132,7 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 				bufferOffset = 0
 			} else {
 				if lastInputBlockSize == InputBlockSize {
-					err := fmt.Errorf("file contains very long lines (no newline in %d bytes)", InputBlockSize)
-					return err
+					return errLineTooLong
 				}
 				bufferOffset = validMatchRange
 				continue

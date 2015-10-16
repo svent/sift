@@ -116,8 +116,9 @@ type Result struct {
 }
 
 var (
-	options     Options
-	errorLogger = log.New(os.Stderr, "Error: ", 0)
+	options        Options
+	errorLogger    = log.New(os.Stderr, "Error: ", 0)
+	errLineTooLong = errors.New("line too long")
 )
 var global = struct {
 	conditions            []Condition
@@ -351,7 +352,14 @@ func processFileTargets() {
 			err = processReader(reader, matchRegexes, dataBuffer, testBuffer, filepath)
 		}
 		if err != nil {
-			errorLogger.Printf("cannot process data from file '%s': %s\n", filepath, err)
+			if err == errLineTooLong {
+				if !options.ErrSkipLineLength {
+					errmsg := fmt.Sprintf("file contains very long lines (no newline in %d bytes)", InputBlockSize)
+					errorLogger.Printf("cannot process data from file '%s': %s\n", filepath, errmsg)
+				}
+			} else {
+				errorLogger.Printf("cannot process data from file '%s': %s\n", filepath, err)
+			}
 		}
 		infile.Close()
 	}
