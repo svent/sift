@@ -36,7 +36,6 @@ import (
 )
 
 const (
-	InputBlockSize = 256 * 1024
 	// InputMultilineWindow is the size of the sliding window for multiline matching
 	InputMultilineWindow = 32 * 1024
 	// MultilinePipeTimeout is the timeout for reading and matching input
@@ -116,6 +115,7 @@ type Result struct {
 }
 
 var (
+	InputBlockSize int = 256 * 1024
 	options        Options
 	errorLogger    = log.New(os.Stderr, "Error: ", 0)
 	errLineTooLong = errors.New("line too long")
@@ -564,8 +564,7 @@ func main() {
 	for i := range global.matchPatterns {
 		global.matchRegexes[i], err = regexp.Compile(global.matchPatterns[i])
 		if err != nil {
-			errorLogger.Printf("cannot parse pattern: %s\n", err)
-			os.Exit(2)
+			errorLogger.Fatalf("cannot parse pattern: %s\n", err)
 		}
 	}
 

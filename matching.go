@@ -532,7 +532,7 @@ MatchLoop:
 func getBeforeContextFromFile(target string, offset int64, start int) *string {
 	var contextBeforeStart int
 	infile, _ := os.Open(target)
-	seekPosition := offset + int64(start) - InputBlockSize
+	seekPosition := offset + int64(start) - int64(InputBlockSize)
 	if seekPosition < 0 {
 		seekPosition = 0
 	}

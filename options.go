@@ -32,8 +32,9 @@ import (
 )
 
 type Options struct {
-	BinarySkip         bool `long:"binary-skip" description:"skip files that seem to be binary"`
-	BinaryAsText       bool `short:"a" long:"binary-text" description:"process files that seem to be binary as text"`
+	BinarySkip         bool   `long:"binary-skip" description:"skip files that seem to be binary"`
+	BinaryAsText       bool   `short:"a" long:"binary-text" description:"process files that seem to be binary as text"`
+	Blocksize          string `long:"blocksize" description:"blocksize in bytes (with optional suffix K|M)"`
 	Color              string
 	ColorFunc          func()   `long:"color" description:"enable colored output (default: auto)" json:"-"`
 	NoColorFunc        func()   `long:"no-color" description:"disable colored output" json:"-"`
@@ -310,6 +311,29 @@ func (o *Options) checkFormats() error {
 			if _, ok := global.fileTypesMap[t]; !ok {
 				return fmt.Errorf("file type '%s' is not specified. See --list-types for a list of available file types", t)
 			}
+		}
+	}
+
+	if options.Blocksize != "" {
+		re := regexp.MustCompile(`^\d+[kKmM]?$`)
+		if !re.MatchString(options.Blocksize) {
+			errorLogger.Printf("cannot parse blocksize %q\n", options.Blocksize)
+			os.Exit(2)
+		}
+		var blocksize int
+		switch options.Blocksize[len(options.Blocksize)-1:] {
+		case "k", "K":
+			blocksize, _ = strconv.Atoi(options.Blocksize[0 : len(options.Blocksize)-1])
+			InputBlockSize = blocksize * 1024
+		case "m", "M":
+			blocksize, _ = strconv.Atoi(options.Blocksize[0 : len(options.Blocksize)-1])
+			InputBlockSize = blocksize * 1024 * 1024
+		default:
+			blocksize, _ := strconv.Atoi(options.Blocksize)
+			InputBlockSize = blocksize
+		}
+		if InputBlockSize < 256*1024 {
+			errorLogger.Fatalln("blocksize must be >= 256k")
 		}
 	}
 
