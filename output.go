@@ -255,14 +255,6 @@ func printResult(result *Result) {
 		return
 	}
 
-	if result.isBinary && !options.BinarySkip && !options.BinaryAsText {
-		writeOutput("Binary file matches: %s\n", result.target)
-		global.totalMatchCount++
-		global.totalResultCount++
-		return
-
-	}
-
 	// print separator between file results if this is not the first result
 	if global.totalMatchCount > 0 {
 		if options.GroupByFile {
@@ -272,6 +264,13 @@ func printResult(result *Result) {
 				fmt.Fprintln(global.outputFile, "--")
 			}
 		}
+	}
+
+	if result.isBinary && !options.BinarySkip && !options.BinaryAsText {
+		writeOutput("Binary file matches: %s\n", result.target)
+		global.totalMatchCount++
+		global.totalResultCount++
+		return
 	}
 
 	if options.GroupByFile {
