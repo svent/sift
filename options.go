@@ -29,6 +29,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type Options struct {
@@ -625,11 +627,9 @@ func (o *Options) performAutoDetections(targets []string) {
 	}
 
 	if o.Color == "auto" {
-		// auto activate colored output only if STDOUT is a device,
-		// disable for files and pipes
+		// auto activate colored output only if STDOUT is a terminal
 		if o.Output == "" {
-			stat, err := os.Stdout.Stat()
-			if err == nil && stat.Mode()&os.ModeDevice != 0 {
+			if runtime.GOOS != "windows" && terminal.IsTerminal(int(os.Stdout.Fd())) {
 				o.Color = "on"
 			} else {
 				o.Color = "off"
@@ -640,8 +640,7 @@ func (o *Options) performAutoDetections(targets []string) {
 	}
 
 	if o.GroupByFile {
-		stat, err := os.Stdout.Stat()
-		if err != nil || stat.Mode()&os.ModeDevice == 0 {
+		if !terminal.IsTerminal(int(os.Stdout.Fd())) {
 			o.GroupByFile = false
 		}
 	}

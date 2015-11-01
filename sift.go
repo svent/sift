@@ -33,6 +33,7 @@ import (
 
 	"github.com/svent/go-flags"
 	"github.com/svent/go-nbreader"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 const (
@@ -522,18 +523,10 @@ func main() {
 
 	if len(args) == 0 {
 		// check whether there is input on STDIN
-		if runtime.GOOS == "windows" {
-			if stat, err := os.Stdin.Stat(); err == nil && stat != nil {
-				targets = []string{"-"}
-			} else {
-				targets = []string{"."}
-			}
+		if !terminal.IsTerminal(int(os.Stdin.Fd())) {
+			targets = []string{"-"}
 		} else {
-			if stat, err := os.Stdin.Stat(); err == nil && stat.Mode()&os.ModeDevice == 0 {
-				targets = []string{"-"}
-			} else {
-				targets = []string{"."}
-			}
+			targets = []string{"."}
 		}
 	} else {
 		targets = args[0:len(args)]
@@ -543,6 +536,10 @@ func main() {
 	if runtime.GOOS == "windows" {
 		targetsExpanded := []string{}
 		for _, t := range targets {
+			if t == "-" {
+				targetsExpanded = append(targetsExpanded, t)
+				continue
+			}
 			expanded, err := filepath.Glob(t)
 			if err == filepath.ErrBadPattern {
 				errorLogger.Fatalf("cannot parse argument '%s': %s\n", t, err)
