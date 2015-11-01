@@ -158,141 +158,146 @@ func recurseDirectory(dirname string) {
 		return
 	}
 	defer dir.Close()
-	entries, err := dir.Readdir(-1)
-	if err != nil {
-		errorLogger.Printf("cannot read directory '%s': %s\n", dirname, err)
-		return
-	}
+	for {
+		entries, err := dir.Readdir(256)
+		if err == io.EOF {
+			return
+		}
+		if err != nil {
+			errorLogger.Printf("cannot read directory '%s': %s\n", dirname, err)
+			return
+		}
 
-nextEntry:
-	for _, fi := range entries {
-		fullpath := filepath.Join(dirname, fi.Name())
+	nextEntry:
+		for _, fi := range entries {
+			fullpath := filepath.Join(dirname, fi.Name())
 
-		// check directory include/exclude options
-		if fi.IsDir() {
-			if !options.Recursive {
-				continue nextEntry
-			}
-			for _, dirPattern := range options.ExcludeDirs {
-				matched, err := filepath.Match(dirPattern, fi.Name())
-				if err != nil {
-					errorLogger.Fatalf("cannot match malformed pattern '%s' against directory name: %s\n", dirPattern, err)
-				}
-				if matched {
+			// check directory include/exclude options
+			if fi.IsDir() {
+				if !options.Recursive {
 					continue nextEntry
 				}
-			}
-			if len(options.IncludeDirs) > 0 {
-				for _, dirPattern := range options.IncludeDirs {
+				for _, dirPattern := range options.ExcludeDirs {
 					matched, err := filepath.Match(dirPattern, fi.Name())
 					if err != nil {
 						errorLogger.Fatalf("cannot match malformed pattern '%s' against directory name: %s\n", dirPattern, err)
 					}
 					if matched {
-						goto includeDirMatchFound
+						continue nextEntry
 					}
 				}
-				continue nextEntry
-			includeDirMatchFound:
-			}
-			recurseDirectory(fullpath)
-			continue nextEntry
-		}
-
-		// check whether this is a regular file
-		if fi.Mode()&os.ModeType != 0 {
-			continue nextEntry
-		}
-
-		// check file path options
-		if global.excludeFilepathRegex != nil {
-			if global.excludeFilepathRegex.MatchString(fullpath) {
-				continue nextEntry
-			}
-		}
-		if global.includeFilepathRegex != nil {
-			if !global.includeFilepathRegex.MatchString(fullpath) {
+				if len(options.IncludeDirs) > 0 {
+					for _, dirPattern := range options.IncludeDirs {
+						matched, err := filepath.Match(dirPattern, fi.Name())
+						if err != nil {
+							errorLogger.Fatalf("cannot match malformed pattern '%s' against directory name: %s\n", dirPattern, err)
+						}
+						if matched {
+							goto includeDirMatchFound
+						}
+					}
+					continue nextEntry
+				includeDirMatchFound:
+				}
+				recurseDirectory(fullpath)
 				continue nextEntry
 			}
-		}
 
-		// check file extension options
-		if len(options.ExcludeExtensions) > 0 {
-			for _, e := range strings.Split(options.ExcludeExtensions, ",") {
-				if filepath.Ext(fi.Name()) == "."+e {
+			// check whether this is a regular file
+			if fi.Mode()&os.ModeType != 0 {
+				continue nextEntry
+			}
+
+			// check file path options
+			if global.excludeFilepathRegex != nil {
+				if global.excludeFilepathRegex.MatchString(fullpath) {
 					continue nextEntry
 				}
 			}
-		}
-		if len(options.IncludeExtensions) > 0 {
-			for _, e := range strings.Split(options.IncludeExtensions, ",") {
-				if filepath.Ext(fi.Name()) == "."+e {
-					goto includeExtensionFound
+			if global.includeFilepathRegex != nil {
+				if !global.includeFilepathRegex.MatchString(fullpath) {
+					continue nextEntry
 				}
 			}
-			continue nextEntry
-		includeExtensionFound:
-		}
 
-		// check file include/exclude options
-		for _, filePattern := range options.ExcludeFiles {
-			matched, err := filepath.Match(filePattern, fi.Name())
-			if err != nil {
-				errorLogger.Fatalf("cannot match malformed pattern '%s' against file name: %s\n", filePattern, err)
+			// check file extension options
+			if len(options.ExcludeExtensions) > 0 {
+				for _, e := range strings.Split(options.ExcludeExtensions, ",") {
+					if filepath.Ext(fi.Name()) == "."+e {
+						continue nextEntry
+					}
+				}
 			}
-			if matched {
+			if len(options.IncludeExtensions) > 0 {
+				for _, e := range strings.Split(options.IncludeExtensions, ",") {
+					if filepath.Ext(fi.Name()) == "."+e {
+						goto includeExtensionFound
+					}
+				}
 				continue nextEntry
+			includeExtensionFound:
 			}
-		}
-		if len(options.IncludeFiles) > 0 {
-			for _, filePattern := range options.IncludeFiles {
+
+			// check file include/exclude options
+			for _, filePattern := range options.ExcludeFiles {
 				matched, err := filepath.Match(filePattern, fi.Name())
 				if err != nil {
 					errorLogger.Fatalf("cannot match malformed pattern '%s' against file name: %s\n", filePattern, err)
 				}
 				if matched {
-					goto includeFileMatchFound
+					continue nextEntry
 				}
 			}
-			continue nextEntry
-		includeFileMatchFound:
-		}
+			if len(options.IncludeFiles) > 0 {
+				for _, filePattern := range options.IncludeFiles {
+					matched, err := filepath.Match(filePattern, fi.Name())
+					if err != nil {
+						errorLogger.Fatalf("cannot match malformed pattern '%s' against file name: %s\n", filePattern, err)
+					}
+					if matched {
+						goto includeFileMatchFound
+					}
+				}
+				continue nextEntry
+			includeFileMatchFound:
+			}
 
-		// check file type options
-		if len(options.ExcludeTypes) > 0 {
-			for _, t := range strings.Split(options.ExcludeTypes, ",") {
-				for _, filePattern := range global.fileTypesMap[t].Patterns {
-					if matched, _ := filepath.Match(filePattern, fi.Name()); matched {
-						continue nextEntry
+			// check file type options
+			if len(options.ExcludeTypes) > 0 {
+				for _, t := range strings.Split(options.ExcludeTypes, ",") {
+					for _, filePattern := range global.fileTypesMap[t].Patterns {
+						if matched, _ := filepath.Match(filePattern, fi.Name()); matched {
+							continue nextEntry
+						}
 					}
-				}
-				sr := global.fileTypesMap[t].ShebangRegex
-				if sr != nil {
-					if m, err := checkShebang(global.fileTypesMap[t].ShebangRegex, fullpath); m && err == nil {
-						continue nextEntry
-					}
-				}
-			}
-		}
-		if len(options.IncludeTypes) > 0 {
-			for _, t := range strings.Split(options.IncludeTypes, ",") {
-				for _, filePattern := range global.fileTypesMap[t].Patterns {
-					if matched, _ := filepath.Match(filePattern, fi.Name()); matched {
-						goto includeTypeFound
-					}
-				}
-				sr := global.fileTypesMap[t].ShebangRegex
-				if sr != nil {
-					if m, err := checkShebang(global.fileTypesMap[t].ShebangRegex, fullpath); err != nil || m {
-						goto includeTypeFound
+					sr := global.fileTypesMap[t].ShebangRegex
+					if sr != nil {
+						if m, err := checkShebang(global.fileTypesMap[t].ShebangRegex, fullpath); m && err == nil {
+							continue nextEntry
+						}
 					}
 				}
 			}
-			continue nextEntry
-		includeTypeFound:
-		}
+			if len(options.IncludeTypes) > 0 {
+				for _, t := range strings.Split(options.IncludeTypes, ",") {
+					for _, filePattern := range global.fileTypesMap[t].Patterns {
+						if matched, _ := filepath.Match(filePattern, fi.Name()); matched {
+							goto includeTypeFound
+						}
+					}
+					sr := global.fileTypesMap[t].ShebangRegex
+					if sr != nil {
+						if m, err := checkShebang(global.fileTypesMap[t].ShebangRegex, fullpath); err != nil || m {
+							goto includeTypeFound
+						}
+					}
+				}
+				continue nextEntry
+			includeTypeFound:
+			}
 
-		global.filesChan <- fullpath
+			global.filesChan <- fullpath
+		}
 	}
 }
 
