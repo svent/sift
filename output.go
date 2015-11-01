@@ -17,6 +17,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -39,6 +40,9 @@ func writeOutput(format string, a ...interface{}) {
 
 func printFilename(filename string, delim string) {
 	if options.ShowFilename == "on" && !options.GroupByFile {
+		if options.OutputUnixPath {
+			filename = filepath.ToSlash(filename)
+		}
 		writeOutput(global.termHighlightFilename+"%s"+global.termHighlightReset+delim, filename)
 	}
 }
@@ -267,14 +271,22 @@ func printResult(result *Result) {
 	}
 
 	if result.isBinary && !options.BinarySkip && !options.BinaryAsText {
-		writeOutput("Binary file matches: %s\n", result.target)
+		filename := result.target
+		if options.OutputUnixPath {
+			filename = filepath.ToSlash(filename)
+		}
+		writeOutput("Binary file matches: %s\n", filename)
 		global.totalMatchCount++
 		global.totalResultCount++
 		return
 	}
 
 	if options.GroupByFile {
-		writeOutput(global.termHighlightFilename+"%s\n"+global.termHighlightReset, result.target)
+		filename := result.target
+		if options.OutputUnixPath {
+			filename = filepath.ToSlash(filename)
+		}
+		writeOutput(global.termHighlightFilename+"%s\n"+global.termHighlightReset, filename)
 	}
 
 	var lastPrintedLine int64 = -1

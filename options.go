@@ -69,6 +69,7 @@ type Options struct {
 	Output             string   `short:"o" long:"output" description:"write output to the specified file or network connection" value-name:"FILE|tcp://HOST:PORT" json:"-"`
 	OutputLimit        int      `long:"output-limit" description:"limit output length per found match" default-mask:"-"`
 	OutputSeparator    string   `long:"output-sep" description:"output separator (default: \"\\n\")" default-mask:"-" json:"-"`
+	OutputUnixPath     bool     `long:"output-unixpath" description:"output file paths in unix format ('/' as path separator)"`
 	Patterns           []string `short:"e" long:"regexp" description:"add pattern PATTERN to the search" value-name:"PATTERN" default-mask:"-" json:"-"`
 	PatternFile        string   `short:"f" long:"regexp-file" description:"search for patterns contained in FILE (one per line)" value-name:"FILE" default-mask:"-" json:"-"`
 	PrintConfig        bool     `long:"print-config" description:"print config for loaded configs + given command line arguments" json:"-"`
