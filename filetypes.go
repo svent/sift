@@ -64,6 +64,11 @@ func init() {
 			Patterns:     []string{"*.rb", "*.rhtml", "*.rjs", "*.rxml", "*.erb", "*.rake", "*.spec", "Rakefile"},
 			ShebangRegex: regexp.MustCompile(`^#!.*\bruby\b`),
 		},
+		"python": FileType{
+			Name:         "python",
+			Patterns:     []string{"*.py", "*.pyw", "*.pyx", "SConstruct"},
+			ShebangRegex: regexp.MustCompile(`^#!.*\bpython[0-9.]*\b`),
+		},
 		"shell": FileType{
 			Name:         "shell",
 			Patterns:     []string{"*.sh", "*.bash", "*.csh", "*.tcsh", "*.ksh", "*.zsh"},
