@@ -17,7 +17,6 @@ package main
 
 import (
 	"bufio"
-	"compress/gzip"
 	"errors"
 	"fmt"
 	"io"
@@ -31,6 +30,7 @@ import (
 	"sync"
 	"time"
 
+	gzip "github.com/klauspost/pgzip"
 	"github.com/svent/go-flags"
 	"github.com/svent/go-nbreader"
 	"golang.org/x/crypto/ssh/terminal"
