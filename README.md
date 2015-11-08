@@ -2,27 +2,27 @@
 
 A fast and powerful open source alternative to grep.
 
-Please go to [sift-tool.org](http://sift-tool.org) for more information.
+Please go to [sift-tool.org](https://sift-tool.org) for more information.
+
 
 ## Installation
 
-### Option #1: For wide options of OSes and Architectures
+### Download Binaries
+You can download binaries for the current version at https://sift-tool.org/download.
 
-[Download **sift** binary](http://sift-tool.org/download.html) for several OSes
-(Linux, Windows, OS X, *BSD, Plan 9, Solaris) and Architectures
-(32-bit/64-bit/ARM).
+sift is available for Linux, Windows, OS X and *BSD.
 
-### Option #2: Packages for OS-Specify
+
+### Install from Package Repositories
 
 #### Arch Linux
-
-Download and install **sift** binary from http://sift-tool.org/download.html:
+Download and install the binary from http://sift-tool.org/download:
 
 ```sh
 $ yaourt -S sift-bin
 ```
 
-Or build and install **sift** binary from https://github.com/svent/sift:
+Or build and install sift from source at https://github.com/svent/sift:
 
 ```sh
 $ yaourt -S sift
@@ -35,6 +35,29 @@ Using [Homebrew](http://brew.sh/):
 ```sh
 $ brew install sift
 ```
+
+### Install with Working Go Environment
+
+If you have a working go environment, you can install sift using "go get":
+
+```go get github.com/svent/sift```
+
+
+## Contributing
+
+### Feature Requests
+If there is a feature or option you would like to see in sift,
+please open an issue and describe what you are missing.
+Where possible, please include an example (input file,
+expected output etc.) to better convey your idea.
+
+### Bugs / Unexpected Behavior
+If you found a bug, please check the open issues and the
+[limitations and restrictions](https://sift-tool.org/docs)
+described in the documentation.
+If you cannot find any documentation about it, please open a new issue,
+name the sift version you used and describe the steps to reproduce the problem.
+
 
 ## License
 
@@ -51,3 +74,4 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
