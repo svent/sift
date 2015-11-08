@@ -360,7 +360,7 @@ func processFileTargets() {
 		if err != nil {
 			if err == errLineTooLong {
 				if !options.ErrSkipLineLength {
-					errmsg := fmt.Sprintf("file contains very long lines (no newline in %d bytes)", InputBlockSize)
+					errmsg := fmt.Sprintf("file contains very long lines (>= %d bytes). See options --blocksize and --err-skip-line-length.", InputBlockSize)
 					errorLogger.Printf("cannot process data from file '%s': %s\n", filepath, errmsg)
 				}
 			} else {
