@@ -59,6 +59,7 @@ type Options struct {
 	FilesWithMatches   bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
 	FilesWithoutMatch  bool     `short:"L" long:"files-without-match" description:"list files containing no match"`
 	GroupByFile        bool     `long:"group" description:"group output by file (default: off)"`
+	NoConfig           bool     `long:"no-conf" description:"do not load config files" json:"-"`
 	NoGroupByFile      func()   `long:"no-group" description:"do not group output by file" json:"-"`
 	IgnoreCase         bool     `short:"i" long:"ignore-case" description:"case insensitive (default: off)"`
 	NoIgnoreCase       func()   `short:"I" long:"no-ignore-case" description:"disable case insensitive" json:"-"`
@@ -154,7 +155,7 @@ func findLocalConfig() string {
 	return ""
 }
 
-// LoadDefaults sets default options and tries to load options from sift config files.
+// LoadDefaults sets default options.
 func (o *Options) LoadDefaults() {
 	o.Cores = runtime.NumCPU()
 	o.OutputSeparator = ""
@@ -229,7 +230,10 @@ func (o *Options) LoadDefaults() {
 		}
 		os.Exit(0)
 	}
+}
 
+// LoadConfigs tries to load options from sift config files.
+func (o *Options) LoadConfigs() {
 	// load config from global sift config if file exists
 	if homedir := getHomeDir(); homedir != "" {
 		configFilePath := filepath.Join(homedir, SiftConfigFile)

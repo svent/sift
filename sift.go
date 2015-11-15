@@ -481,15 +481,19 @@ func executeSearch(targets []string) (ret int, err error) {
 
 func main() {
 	var targets []string
-
-	options.LoadDefaults()
+	var args []string
+	var err error
 
 	parser := flags.NewNamedParser("sift", flags.HelpFlag|flags.PassDoubleDash)
 	parser.AddGroup("Options", "Options", &options)
 	parser.Name = "sift"
 	parser.Usage = "[OPTIONS] PATTERN [FILE|PATH|tcp://HOST:PORT...]\n" +
 		"  sift [OPTIONS] [-e PATTERN | -f FILE] [FILE|PATH|tcp://HOST:PORT...]"
-	args, err := parser.Parse()
+
+	// temporarily parse options to see if the --no-conf option was used and
+	// then discard the result
+	options.LoadDefaults()
+	args, err = parser.Parse()
 	if err != nil {
 		if e, ok := err.(*flags.Error); ok && e.Type == flags.ErrHelp {
 			fmt.Println(e.Error())
@@ -498,6 +502,19 @@ func main() {
 			errorLogger.Println(err)
 			os.Exit(2)
 		}
+	}
+	loadConfig := !options.NoConfig
+	options = Options{}
+
+	// perform full option parsing respecting the --no-conf option
+	options.LoadDefaults()
+	if loadConfig {
+		options.LoadConfigs()
+	}
+	args, err = parser.Parse()
+	if err != nil {
+		errorLogger.Println(err)
+		os.Exit(2)
 	}
 
 	for _, pattern := range options.Patterns {
