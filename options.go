@@ -64,6 +64,7 @@ type Options struct {
 	NoIgnoreCase       func()   `short:"I" long:"no-ignore-case" description:"disable case insensitive" json:"-"`
 	InvertMatch        bool     `short:"v" long:"invert-match" description:"select non-matching lines" json:"-"`
 	Limit              int64    `long:"limit" description:"only show first NUM matches per file" value-name:"NUM" default-mask:"-"`
+	Literal            bool     `short:"Q" long:"literal" description:"treat pattern as literal, quote meta characters"`
 	Multiline          bool     `short:"m" long:"multiline" description:"multiline parsing (default: off)"`
 	NoMultiline        func()   `short:"M" long:"no-multiline" description:"disable multiline parsing" json:"-"`
 	Output             string   `short:"o" long:"output" description:"write output to the specified file or network connection" value-name:"FILE|tcp://HOST:PORT" json:"-"`
@@ -372,8 +373,11 @@ func (o *Options) checkFormats() error {
 	return nil
 }
 
-// preparePattern adjusts a pattern to respect the ignore-case and multiline options
+// preparePattern adjusts a pattern to respect the ignore-case, literal and multiline options
 func (o *Options) preparePattern(pattern string) string {
+	if o.Literal {
+		pattern = regexp.QuoteMeta(pattern)
+	}
 	if o.IgnoreCase {
 		pattern = strings.ToLower(pattern)
 	}
