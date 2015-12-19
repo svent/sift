@@ -78,7 +78,7 @@ type Options struct {
 	Quiet              bool     `short:"q" long:"quiet" description:"suppress output, exit with return code zero if any match is found" json:"-"`
 	Recursive          bool     `short:"r" long:"recursive" description:"recurse into directories (default: on)"`
 	NoRecursive        func()   `short:"R" long:"no-recursive" description:"do not recurse into directories" json:"-"`
-	Replace            string   `long:"replace" description:"replace matches. Use ${1}, ${2}, $name, ... for captured submatches" json:"-"`
+	Replace            string   `long:"replace" description:"replace numbered or named (?P<name>pattern) capture groups. Use ${1}, ${2}, $name, ... for captured submatches" json:"-"`
 	ShowFilename       string
 	ShowFilenameFunc   func() `long:"filename" description:"enforce printing the filename before results (default: auto)" json:"-"`
 	NoShowFilenameFunc func() `long:"no-filename" description:"disable printing the filename before results" json:"-"`
