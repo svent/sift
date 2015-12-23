@@ -58,11 +58,12 @@ type Options struct {
 	ExcludeTypes       string   `short:"T" long:"no-type" description:"exclude specific file types (comma-separated, --list-types)" default-mask:"-"`
 	FilesWithMatches   bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
 	FilesWithoutMatch  bool     `short:"L" long:"files-without-match" description:"list files containing no match"`
+	Git                bool     `long:"git" description:"respect .gitignore files and skip .git directories"`
 	GroupByFile        bool     `long:"group" description:"group output by file (default: off)"`
-	NoConfig           bool     `long:"no-conf" description:"do not load config files" json:"-"`
 	NoGroupByFile      func()   `long:"no-group" description:"do not group output by file" json:"-"`
 	IgnoreCase         bool     `short:"i" long:"ignore-case" description:"case insensitive (default: off)"`
 	NoIgnoreCase       func()   `short:"I" long:"no-ignore-case" description:"disable case insensitive" json:"-"`
+	NoConfig           bool     `long:"no-conf" description:"do not load config files" json:"-"`
 	InvertMatch        bool     `short:"v" long:"invert-match" description:"select non-matching lines" json:"-"`
 	Limit              int64    `long:"limit" description:"only show first NUM matches per file" value-name:"NUM" default-mask:"-"`
 	Literal            bool     `short:"Q" long:"literal" description:"treat pattern as literal, quote meta characters"`
@@ -322,11 +323,14 @@ func (o *Options) checkFormats() error {
 		}
 	}
 
+	if options.Cores < 0 {
+		return fmt.Errorf("the number of cores must be >= 1 (or 0 for 'all')")
+	}
+
 	if options.Blocksize != "" {
 		re := regexp.MustCompile(`^\d+[kKmM]?$`)
 		if !re.MatchString(options.Blocksize) {
-			errorLogger.Printf("cannot parse blocksize %q\n", options.Blocksize)
-			os.Exit(2)
+			return fmt.Errorf("cannot parse blocksize %q", options.Blocksize)
 		}
 		var blocksize int
 		switch options.Blocksize[len(options.Blocksize)-1:] {
@@ -341,7 +345,7 @@ func (o *Options) checkFormats() error {
 			InputBlockSize = blocksize
 		}
 		if InputBlockSize < 256*1024 {
-			errorLogger.Fatalln("blocksize must be >= 256k")
+			return fmt.Errorf("blocksize must be >= 256k")
 		}
 	}
 
@@ -652,6 +656,10 @@ func (o *Options) performAutoDetections(targets []string) {
 		if !terminal.IsTerminal(int(os.Stdout.Fd())) {
 			o.GroupByFile = false
 		}
+	}
+
+	if o.Cores == 0 {
+		o.Cores = runtime.NumCPU()
 	}
 
 	if o.Color == "on" {

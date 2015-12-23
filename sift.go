@@ -33,6 +33,7 @@ import (
 
 	"github.com/svent/go-flags"
 	"github.com/svent/go-nbreader"
+	"github.com/svent/sift/gitignore"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -45,8 +46,11 @@ const (
 	// MultilinePipeChunkTimeout is the timeout to consider last input from STDIN/network
 	// as a complete chunk for multiline matching
 	MultilinePipeChunkTimeout = 150 * time.Millisecond
-	SiftConfigFile            = ".sift.conf"
-	SiftVersion               = "0.5.0"
+	// MaxDirRecursionRoutines is the maximum number of parallel routines used
+	// to recurse into directories
+	MaxDirRecursionRoutines = 3
+	SiftConfigFile          = ".sift.conf"
+	SiftVersion             = "0.5.0"
 )
 
 type ConditionType int
@@ -124,6 +128,7 @@ var (
 var global = struct {
 	conditions            []Condition
 	filesChan             chan string
+	directoryChan         chan string
 	fileTypesMap          map[string]FileType
 	includeFilepathRegex  *regexp.Regexp
 	excludeFilepathRegex  *regexp.Regexp
@@ -131,9 +136,11 @@ var global = struct {
 	outputFile            io.Writer
 	matchPatterns         []string
 	matchRegexes          []*regexp.Regexp
+	gitignoreCache        *gitignore.GitIgnoreCache
 	resultsChan           chan *Result
 	resultsDoneChan       chan struct{}
 	targetsWaitGroup      sync.WaitGroup
+	recurseWaitGroup      sync.WaitGroup
 	streamingAllowed      bool
 	streamingThreshold    int
 	termHighlightFilename string
@@ -149,9 +156,45 @@ var global = struct {
 	streamingThreshold: 1 << 16,
 }
 
-// recurseDirectory recurses into a directory and sends all files
-// fulfilling the selected options into global.filesChan
-func recurseDirectory(dirname string) {
+// processDirectories reads global.directoryChan and processes
+// directories via processDirectory.
+func processDirectories() {
+	n := options.Cores
+	if n > MaxDirRecursionRoutines {
+		n = MaxDirRecursionRoutines
+	}
+	for i := 0; i < n; i++ {
+		go func() {
+			for dirname := range global.directoryChan {
+				processDirectory(dirname)
+			}
+		}()
+	}
+}
+
+// enqueueDirectory enqueues directories on global.directoryChan.
+// If the channel blocks, the directory is processed directly.
+func enqueueDirectory(dirname string) {
+	global.recurseWaitGroup.Add(1)
+	select {
+	case global.directoryChan <- dirname:
+	default:
+		processDirectory(dirname)
+	}
+}
+
+// processDirectory recurses into a directory and sends all files
+// fulfilling the selected options on global.filesChan
+func processDirectory(dirname string) {
+	defer global.recurseWaitGroup.Done()
+	var gic *gitignore.Checker
+	if options.Git {
+		gic = gitignore.NewCheckerWithCache(global.gitignoreCache)
+		err := gic.LoadBasePath(dirname)
+		if err != nil {
+			errorLogger.Printf("cannot load gitignore files for path '%s': %s", dirname, err)
+		}
+	}
 	dir, err := os.Open(dirname)
 	if err != nil {
 		errorLogger.Printf("cannot open directory '%s': %s\n", dirname, err)
@@ -199,7 +242,12 @@ func recurseDirectory(dirname string) {
 					continue nextEntry
 				includeDirMatchFound:
 				}
-				recurseDirectory(fullpath)
+				if options.Git {
+					if fi.Name() == gitignore.GitFoldername || gic.Check(fullpath, fi) {
+						continue nextEntry
+					}
+				}
+				enqueueDirectory(fullpath)
 				continue nextEntry
 			}
 
@@ -294,6 +342,12 @@ func recurseDirectory(dirname string) {
 				}
 				continue nextEntry
 			includeTypeFound:
+			}
+
+			if options.Git {
+				if fi.Name() == gitignore.GitIgnoreFilename || gic.Check(fullpath, fi) {
+					continue
+				}
 			}
 
 			global.filesChan <- fullpath
@@ -419,17 +473,22 @@ func executeSearch(targets []string) (ret int, err error) {
 	}()
 	tstart := time.Now()
 	global.filesChan = make(chan string, 256)
+	global.directoryChan = make(chan string, 128)
 	global.resultsChan = make(chan *Result, 128)
 	global.resultsDoneChan = make(chan struct{})
+	global.gitignoreCache = gitignore.NewGitIgnoreCache()
 	global.totalTargetCount = 0
 	global.totalMatchCount = 0
 	global.totalResultCount = 0
+
 	go resultHandler()
 
 	for i := 0; i < options.Cores; i++ {
 		global.targetsWaitGroup.Add(1)
 		go processFileTargets()
 	}
+
+	go processDirectories()
 
 	for _, target := range targets {
 		switch {
@@ -448,12 +507,16 @@ func executeSearch(targets []string) (ret int, err error) {
 				}
 			}
 			if fileinfo.IsDir() {
-				recurseDirectory(target)
+				global.recurseWaitGroup.Add(1)
+				global.directoryChan <- target
 			} else {
 				global.filesChan <- target
 			}
 		}
 	}
+
+	global.recurseWaitGroup.Wait()
+	close(global.directoryChan)
 
 	close(global.filesChan)
 	global.targetsWaitGroup.Wait()
