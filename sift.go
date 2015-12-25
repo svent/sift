@@ -147,6 +147,7 @@ var global = struct {
 	termHighlightLineno   string
 	termHighlightMatch    string
 	termHighlightReset    string
+	totalLineLengthErrors int64
 	totalMatchCount       int64
 	totalResultCount      int64
 	totalTargetCount      int64
@@ -413,7 +414,8 @@ func processFileTargets() {
 		}
 		if err != nil {
 			if err == errLineTooLong {
-				if !options.ErrSkipLineLength {
+				global.totalLineLengthErrors += 1
+				if options.ErrShowLineLength {
 					errmsg := fmt.Sprintf("file contains very long lines (>= %d bytes). See options --blocksize and --err-skip-line-length.", InputBlockSize)
 					errorLogger.Printf("cannot process data from file '%s': %s\n", filepath, errmsg)
 				}
@@ -478,6 +480,7 @@ func executeSearch(targets []string) (ret int, err error) {
 	global.resultsDoneChan = make(chan struct{})
 	global.gitignoreCache = gitignore.NewGitIgnoreCache()
 	global.totalTargetCount = 0
+	global.totalLineLengthErrors = 0
 	global.totalMatchCount = 0
 	global.totalResultCount = 0
 
@@ -529,6 +532,10 @@ func executeSearch(targets []string) (ret int, err error) {
 		retVal = 0
 	} else {
 		retVal = 1
+	}
+
+	if !options.ErrSkipLineLength && !options.ErrShowLineLength && global.totalLineLengthErrors > 0 {
+		errorLogger.Printf("%d files skipped due to very long lines (>= %d bytes). See options --blocksize, --err-show-line-length and --err-skip-line-length.", global.totalLineLengthErrors, InputBlockSize)
 	}
 
 	if options.Stats {

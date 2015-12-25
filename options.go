@@ -46,6 +46,7 @@ type Options struct {
 	Cores              int      `short:"j" long:"cores" description:"limit used CPU Cores (default: 0 = all)" default-mask:"-"`
 	Count              bool     `short:"c" long:"count" description:"print count of matches per file" json:"-"`
 	IncludeDirs        []string `long:"dirs" description:"recurse only into directories whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
+	ErrShowLineLength  bool     `long:"err-show-line-length" description:"show all line length errors"`
 	ErrSkipLineLength  bool     `long:"err-skip-line-length" description:"skip line length errors"`
 	ExcludeDirs        []string `long:"exclude-dirs" description:"do not recurse into directories whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
 	IncludeExtensions  string   `short:"x" long:"ext" description:"limit search to specific file extensions (comma-separated)" default-mask:"-"`
@@ -552,6 +553,10 @@ func (o *Options) checkCompatibility(targets []string) error {
 
 	if o.BinarySkip && o.BinaryAsText {
 		return errors.New("options 'binary-skip' and 'binary-text' cannot be used together")
+	}
+
+	if o.ErrSkipLineLength && o.ErrShowLineLength {
+		return errors.New("options 'err-skip-line-length' and 'err-show-line-length' cannot be used together")
 	}
 
 	if len(global.conditions) == 0 {
