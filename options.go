@@ -63,6 +63,7 @@ type Options struct {
 	NoGroupByFile      func()   `long:"no-group" description:"do not group output by file" json:"-"`
 	IgnoreCase         bool     `short:"i" long:"ignore-case" description:"case insensitive (default: off)"`
 	NoIgnoreCase       func()   `short:"I" long:"no-ignore-case" description:"disable case insensitive" json:"-"`
+	SmartCase          bool     `long:"smart-case" description:"case insensitive unless capital letter in pattern (default: off)"`
 	NoConfig           bool     `long:"no-conf" description:"do not load config files" json:"-"`
 	InvertMatch        bool     `short:"v" long:"invert-match" description:"select non-matching lines" json:"-"`
 	Limit              int64    `long:"limit" description:"only show first NUM matches per file" value-name:"NUM" default-mask:"-"`
@@ -172,6 +173,7 @@ func (o *Options) LoadDefaults() {
 	}
 	o.NoIgnoreCase = func() {
 		o.IgnoreCase = false
+		o.SmartCase = false
 	}
 	o.NoGroupByFile = func() {
 		o.GroupByFile = false
@@ -385,6 +387,14 @@ func (o *Options) checkFormats() error {
 func (o *Options) preparePattern(pattern string) string {
 	if o.Literal {
 		pattern = regexp.QuoteMeta(pattern)
+	}
+	if o.SmartCase {
+		// SmartCase triggers IgnoreCase unless a capital letter is found
+		o.IgnoreCase = true
+		match, _ := regexp.MatchString("\\p{Lu}", pattern)
+		if (match) {
+			o.IgnoreCase = false
+		}
 	}
 	if o.IgnoreCase {
 		pattern = strings.ToLower(pattern)
