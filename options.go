@@ -70,6 +70,7 @@ type Options struct {
 	Literal            bool     `short:"Q" long:"literal" description:"treat pattern as literal, quote meta characters"`
 	Multiline          bool     `short:"m" long:"multiline" description:"multiline parsing (default: off)"`
 	NoMultiline        func()   `short:"M" long:"no-multiline" description:"disable multiline parsing" json:"-"`
+	OnlyMatching       bool     `long:"only-matching" description:"only show the matching part of a line" json:"-"`
 	Output             string   `short:"o" long:"output" description:"write output to the specified file or network connection" value-name:"FILE|tcp://HOST:PORT" json:"-"`
 	OutputLimit        int      `long:"output-limit" description:"limit output length per found match" default-mask:"-"`
 	OutputSeparator    string   `long:"output-sep" description:"output separator (default: \"\\n\")" default-mask:"-" json:"-"`
@@ -283,6 +284,10 @@ func (o *Options) Apply(patterns []string, targets []string) error {
 
 	if o.Quiet {
 		global.outputFile = ioutil.Discard
+	}
+
+	if o.OnlyMatching {
+		o.Replace = `$0`
 	}
 
 	for i := range patterns {
@@ -562,6 +567,10 @@ func (o *Options) checkCompatibility(targets []string) error {
 
 	if o.ErrSkipLineLength && o.ErrShowLineLength {
 		return errors.New("options 'err-skip-line-length' and 'err-show-line-length' cannot be used together")
+	}
+
+	if o.OnlyMatching && o.Replace != "" {
+		return errors.New("options 'only-matching' and 'replace' cannot be used together")
 	}
 
 	if len(global.conditions) == 0 {
