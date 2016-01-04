@@ -170,15 +170,15 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			// first line of multiline match with partial highlighting
 			printFilename(target, ":")
 			printLineno(match.lineno, ":")
-			writeOutput("%s%s%s%s%s", firstLine[0:firstLineOffset], global.termHighlightMatch,
-				firstLine[firstLineOffset:len(firstLine)], global.termHighlightReset, options.OutputSeparator)
+			writeOutput("%s%s%s%s\n", firstLine[0:firstLineOffset], global.termHighlightMatch,
+				firstLine[firstLineOffset:len(firstLine)], global.termHighlightReset)
 
 			// lines 2 upto n-1 of multiline match with full highlighting
 			for i := 1; i < len(lines)-1; i++ {
 				line := lines[i]
 				printFilename(target, ":")
 				printLineno(match.lineno+int64(i), ":")
-				writeOutput("%s%s%s%s", global.termHighlightMatch, line, global.termHighlightReset, options.OutputSeparator)
+				writeOutput("%s%s%s\n", global.termHighlightMatch, line, global.termHighlightReset)
 			}
 
 			// last line of multiline match with partial highlighting
