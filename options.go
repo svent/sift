@@ -91,6 +91,7 @@ type Options struct {
 	TargetsOnly        bool   `long:"targets" description:"only list selected files, do not search"`
 	ListTypes          func() `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
 	Version            func() `short:"V" long:"version" description:"show version and license information" json:"-"`
+	WordRegexp         bool   `short:"w" long:"word-regexp" description:"only match on ASCII word boundaries"`
 	WriteConfig        bool   `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
 	Zip                bool   `short:"z" long:"zip" description:"search content of compressed .gz files (default: off)"`
 	NoZip              func() `short:"Z" long:"no-zip" description:"do not search content of compressed .gz files" json:"-"`
@@ -395,6 +396,9 @@ func (o *Options) preparePattern(pattern string) string {
 	}
 	if o.IgnoreCase {
 		pattern = strings.ToLower(pattern)
+	}
+	if o.WordRegexp {
+		pattern = `\b` + pattern + `\b`
 	}
 	pattern = "(?m)" + pattern
 	if o.Multiline {
