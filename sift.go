@@ -382,6 +382,11 @@ func processFileTargets() {
 		var infile *os.File
 		var reader io.Reader
 
+		if options.TargetsOnly {
+			fmt.Println(filepath)
+			continue
+		}
+
 		if filepath == "-" {
 			infile = os.Stdin
 		} else {
@@ -557,8 +562,9 @@ func main() {
 	parser := flags.NewNamedParser("sift", flags.HelpFlag|flags.PassDoubleDash)
 	parser.AddGroup("Options", "Options", &options)
 	parser.Name = "sift"
-	parser.Usage = "[OPTIONS] PATTERN [FILE|PATH|tcp://HOST:PORT...]\n" +
-		"  sift [OPTIONS] [-e PATTERN | -f FILE] [FILE|PATH|tcp://HOST:PORT...]"
+	parser.Usage = "[OPTIONS] PATTERN [FILE|PATH|tcp://HOST:PORT]...\n" +
+		"  sift [OPTIONS] [-e PATTERN | -f FILE] [FILE|PATH|tcp://HOST:PORT]...\n" +
+		"  sift [OPTIONS] --targets [FILE|PATH]..."
 
 	// temporarily parse options to see if the --no-conf option was used and
 	// then discard the result
@@ -604,10 +610,10 @@ func main() {
 		}
 	}
 	if len(global.matchPatterns) == 0 {
-		if len(args) == 0 && !(options.PrintConfig || options.WriteConfig) {
+		if len(args) == 0 && !(options.PrintConfig || options.WriteConfig || options.TargetsOnly) {
 			errorLogger.Fatalln("No pattern given. Try 'sift --help' for more information.")
 		}
-		if len(args) > 0 {
+		if len(args) > 0 && !options.TargetsOnly {
 			global.matchPatterns = append(global.matchPatterns, args[0])
 			args = args[1:len(args)]
 		}

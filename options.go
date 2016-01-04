@@ -87,6 +87,7 @@ type Options struct {
 	ShowLineNumbers    bool   `short:"n" long:"line-number" description:"show line numbers (default: off)"`
 	NoShowLineNumbers  func() `short:"N" long:"no-line-number" description:"do not show line numbers" json:"-"`
 	Stats              bool   `long:"stats" description:"show statistics"`
+	TargetsOnly        bool   `long:"targets" description:"only list selected files, do not search"`
 	ListTypes          func() `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
 	Version            func() `short:"V" long:"version" description:"show version and license information" json:"-"`
 	WriteConfig        bool   `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
@@ -537,6 +538,10 @@ func (o *Options) checkCompatibility(targets []string) error {
 
 	if (stdinTargetFound || netTargetFound) && (o.ContextBefore > 0 || o.ContextAfter > 0) {
 		return errors.New("context options are not supported when reading from STDIN or network")
+	}
+
+	if (stdinTargetFound || netTargetFound) && o.TargetsOnly {
+		return errors.New("targets option not supported when reading from STDIN or network")
 	}
 
 	if (o.ContextBefore != 0 || o.ContextAfter != 0) && (o.Count || o.FilesWithMatches || o.FilesWithoutMatch) {
