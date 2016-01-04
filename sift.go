@@ -398,18 +398,18 @@ func processFileTargets() {
 		}
 
 		if options.Zip && strings.HasSuffix(filepath, ".gz") {
-			rawReader := bufio.NewReader(infile)
+			rawReader := infile
 			reader, err = gzip.NewReader(rawReader)
 			if err != nil {
 				errorLogger.Printf("error decompressing file '%s', opening as normal file\n", infile.Name())
 				infile.Seek(0, 0)
-				reader = bufio.NewReader(infile)
+				reader = infile
 			}
 		} else if infile == os.Stdin && options.Multiline {
-			reader = nbreader.NewNBReader(bufio.NewReader(infile), InputBlockSize,
+			reader = nbreader.NewNBReader(infile, InputBlockSize,
 				nbreader.ChunkTimeout(MultilinePipeChunkTimeout), nbreader.Timeout(MultilinePipeTimeout))
 		} else {
-			reader = bufio.NewReader(infile)
+			reader = infile
 		}
 
 		if options.InvertMatch {
