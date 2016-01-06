@@ -383,7 +383,7 @@ func processFileTargets() {
 		var reader io.Reader
 
 		if options.TargetsOnly {
-			fmt.Println(filepath)
+			global.resultsChan <- &Result{target: filepath}
 			continue
 		}
 

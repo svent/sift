@@ -23,6 +23,10 @@ import (
 
 func resultHandler() {
 	for result := range global.resultsChan {
+		if options.TargetsOnly {
+			fmt.Println(result.target)
+			continue
+		}
 		global.totalTargetCount++
 		result.applyConditions()
 		printResult(result)
