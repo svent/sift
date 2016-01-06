@@ -50,7 +50,7 @@ const (
 	// to recurse into directories
 	MaxDirRecursionRoutines = 3
 	SiftConfigFile          = ".sift.conf"
-	SiftVersion             = "0.7.0"
+	SiftVersion             = "0.7.1"
 )
 
 type ConditionType int
