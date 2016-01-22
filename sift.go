@@ -397,19 +397,34 @@ func processFileTargets() {
 			}
 		}
 
-		if options.Zip && strings.HasSuffix(filepath, ".gz") {
-			rawReader := infile
-			reader, err = gzip.NewReader(rawReader)
-			if err != nil {
-				errorLogger.Printf("error decompressing file '%s', opening as normal file\n", infile.Name())
+		if options.Zip {
+			isGzip := strings.HasSuffix(filepath, ".gz")
+			if !isGzip {
+				var p [4]byte
+				if _, err := io.ReadAtLeast(infile, p[:], 3); err != nil {
+					errorLogger.Printf("error reading file '%s': %s\n", filepath, err)
+					continue
+				}
 				infile.Seek(0, 0)
+				isGzip = p[0] == 0x1f && p[1] == 0x8b && p[2] == 8
+			}
+			if isGzip {
+				rawReader := infile
+				reader, err = gzip.NewReader(rawReader)
+				if err != nil {
+					errorLogger.Printf("error decompressing file '%s', opening as normal file\n", infile.Name())
+					infile.Seek(0, 0)
+					reader = infile
+				}
+			}
+		}
+		if reader == nil {
+			if infile == os.Stdin && options.Multiline {
+				reader = nbreader.NewNBReader(infile, InputBlockSize,
+					nbreader.ChunkTimeout(MultilinePipeChunkTimeout), nbreader.Timeout(MultilinePipeTimeout))
+			} else {
 				reader = infile
 			}
-		} else if infile == os.Stdin && options.Multiline {
-			reader = nbreader.NewNBReader(infile, InputBlockSize,
-				nbreader.ChunkTimeout(MultilinePipeChunkTimeout), nbreader.Timeout(MultilinePipeTimeout))
-		} else {
-			reader = infile
 		}
 
 		if options.InvertMatch {
