@@ -58,10 +58,18 @@ described in the documentation.
 If you cannot find any documentation about it, please open a new issue,
 name the sift version you used and describe the steps to reproduce the problem.
 
+### Pull requests
+Please do not send pull requests and open an issue instead as
+accepting substantial contributions cannot be done correctly without some
+[legal](http://producingoss.com/en/copyright-assignment.html)
+[hassle](https://en.wikipedia.org/wiki/Contributor_License_Agreement).
+Moreover, this allows me to consider already planned features while implementing
+smaller changes.
+
 
 ## License
 
-Copyright (C) 2014-2015 Sven Taute
+Copyright (C) 2014-2016 Sven Taute
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
