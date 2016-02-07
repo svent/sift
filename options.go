@@ -64,6 +64,8 @@ type Options struct {
 	NoGroupByFile      func()   `long:"no-group" description:"do not group output by file" json:"-"`
 	IgnoreCase         bool     `short:"i" long:"ignore-case" description:"case insensitive (default: off)"`
 	NoIgnoreCase       func()   `short:"I" long:"no-ignore-case" description:"disable case insensitive" json:"-"`
+	SmartCase          bool     `short:"s" long:"smart-case" description:"case insensitive unless pattern contains uppercase characters (default: off)"`
+	NoSmartCase        func()   `short:"S" long:"no-smart-case" description:"disable smart case" json:"-"`
 	NoConfig           bool     `long:"no-conf" description:"do not load config files" json:"-"`
 	InvertMatch        bool     `short:"v" long:"invert-match" description:"select non-matching lines" json:"-"`
 	Limit              int64    `long:"limit" description:"only show first NUM matches per file" value-name:"NUM" default-mask:"-"`
@@ -177,6 +179,9 @@ func (o *Options) LoadDefaults() {
 	o.NoIgnoreCase = func() {
 		o.IgnoreCase = false
 	}
+	o.NoSmartCase = func() {
+		o.SmartCase = false
+	}
 	o.NoGroupByFile = func() {
 		o.GroupByFile = false
 	}
@@ -271,7 +276,7 @@ func (o *Options) Apply(patterns []string, targets []string) error {
 		return err
 	}
 
-	if err := o.checkCompatibility(targets); err != nil {
+	if err := o.checkCompatibility(patterns, targets); err != nil {
 		return err
 	}
 
@@ -281,7 +286,7 @@ func (o *Options) Apply(patterns []string, targets []string) error {
 		return err
 	}
 
-	o.performAutoDetections(targets)
+	o.performAutoDetections(patterns, targets)
 
 	if o.Quiet {
 		global.outputFile = ioutil.Discard
@@ -515,7 +520,7 @@ func (o *Options) processConditions() error {
 }
 
 // checkCompatibility checks options for incompatible combinations
-func (o *Options) checkCompatibility(targets []string) error {
+func (o *Options) checkCompatibility(patterns []string, targets []string) error {
 	stdinTargetFound := false
 	netTargetFound := false
 	for _, target := range targets {
@@ -577,20 +582,8 @@ func (o *Options) checkCompatibility(targets []string) error {
 		return errors.New("options 'only-matching' and 'replace' cannot be used together")
 	}
 
-	if len(global.conditions) == 0 {
-		global.streamingAllowed = true
-
-		if len(targets) == 1 {
-			if stdinTargetFound || netTargetFound {
-				global.streamingThreshold = 0
-				o.GroupByFile = false
-			} else {
-				stat, err := os.Stat(targets[0])
-				if err == nil && stat.Mode()&os.ModeType == 0 {
-					global.streamingThreshold = 0
-				}
-			}
-		}
+	if o.SmartCase && (len(patterns) > 1 || len(global.conditions) > 0) {
+		return errors.New("the smart case option cannot be used with multiple patterns or conditions")
 	}
 
 	return nil
@@ -648,7 +641,34 @@ func (o *Options) processConfigOptions() error {
 }
 
 // performAutoDetections sets options that are set to "auto"
-func (o *Options) performAutoDetections(targets []string) {
+func (o *Options) performAutoDetections(patterns []string, targets []string) {
+	stdinTargetFound := false
+	netTargetFound := false
+	for _, target := range targets {
+		switch {
+		case target == "-":
+			stdinTargetFound = true
+		case global.netTcpRegex.MatchString(target):
+			netTargetFound = true
+		}
+	}
+
+	if len(global.conditions) == 0 {
+		global.streamingAllowed = true
+
+		if len(targets) == 1 {
+			if stdinTargetFound || netTargetFound {
+				global.streamingThreshold = 0
+				o.GroupByFile = false
+			} else {
+				stat, err := os.Stat(targets[0])
+				if err == nil && stat.Mode()&os.ModeType == 0 {
+					global.streamingThreshold = 0
+				}
+			}
+		}
+	}
+
 	if o.ShowFilename == "auto" {
 		if len(targets) == 1 {
 			fileinfo, err := os.Stat(targets[0])
@@ -678,6 +698,14 @@ func (o *Options) performAutoDetections(targets []string) {
 	if o.GroupByFile {
 		if !terminal.IsTerminal(int(os.Stdout.Fd())) {
 			o.GroupByFile = false
+		}
+	}
+
+	if !o.IgnoreCase && o.SmartCase {
+		if len(patterns) >= 1 {
+			if m, _ := regexp.MatchString("[A-Z]", patterns[0]); !m {
+				o.IgnoreCase = true
+			}
 		}
 	}
 
