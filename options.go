@@ -54,7 +54,9 @@ type Options struct {
 	IncludeFiles       []string `long:"files" description:"search only files whose name matches GLOB" value-name:"GLOB" default-mask:"-"`
 	ExcludeFiles       []string `long:"exclude-files" description:"do not select files whose name matches GLOB while recursing" value-name:"GLOB" default-mask:"-"`
 	IncludePath        string   `long:"path" description:"search only files whose path matches PATTERN" value-name:"PATTERN" default-mask:"-"`
-	ExcludePath        string   `long:"exclude-path" description:"do not select files whose path matches PATTERN while recursing" value-name:"PATTERN" default-mask:"-"`
+	IncludeIPath       string   `long:"ipath" description:"search only files whose path matches PATTERN (case insensitive)" value-name:"PATTERN" default-mask:"-"`
+	ExcludePath        string   `long:"exclude-path" description:"do not search files whose path matches PATTERN" value-name:"PATTERN" default-mask:"-"`
+	ExcludeIPath       string   `long:"exclude-ipath" description:"do not search files whose path matches PATTERN (case insensitive)" value-name:"PATTERN" default-mask:"-"`
 	IncludeTypes       string   `short:"t" long:"type" description:"limit search to specific file types (comma-separated, see --list-types)" default-mask:"-"`
 	ExcludeTypes       string   `short:"T" long:"no-type" description:"exclude specific file types (comma-separated, --list-types)" default-mask:"-"`
 	FilesWithMatches   bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
@@ -313,11 +315,25 @@ func (o *Options) checkFormats() error {
 			return fmt.Errorf("cannot parse exclude filepath pattern '%s': %s\n", o.ExcludePath, err)
 		}
 	}
+	if o.ExcludeIPath != "" {
+		var err error
+		global.excludeFilepathRegex, err = regexp.Compile("(?i)" + o.ExcludeIPath)
+		if err != nil {
+			return fmt.Errorf("cannot parse exclude filepath pattern '%s': %s\n", o.ExcludeIPath, err)
+		}
+	}
 	if o.IncludePath != "" {
 		var err error
 		global.includeFilepathRegex, err = regexp.Compile(o.IncludePath)
 		if err != nil {
 			return fmt.Errorf("cannot parse filepath pattern '%s': %s\n", o.IncludePath, err)
+		}
+	}
+	if o.IncludeIPath != "" {
+		var err error
+		global.includeFilepathRegex, err = regexp.Compile("(?i)" + o.IncludeIPath)
+		if err != nil {
+			return fmt.Errorf("cannot parse filepath pattern '%s': %s\n", o.IncludeIPath, err)
 		}
 	}
 
@@ -584,6 +600,13 @@ func (o *Options) checkCompatibility(patterns []string, targets []string) error 
 
 	if o.SmartCase && (len(patterns) > 1 || len(global.conditions) > 0) {
 		return errors.New("the smart case option cannot be used with multiple patterns or conditions")
+	}
+
+	if o.ExcludePath != "" && o.ExcludeIPath != "" {
+		return errors.New("options 'exclude-path' and 'exclude-ipath' cannot be used together")
+	}
+	if o.IncludePath != "" && o.IncludeIPath != "" {
+		return errors.New("options 'path' and 'ipath' cannot be used together")
 	}
 
 	return nil
