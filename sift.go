@@ -254,7 +254,27 @@ func processDirectory(dirname string) {
 
 			// check whether this is a regular file
 			if fi.Mode()&os.ModeType != 0 {
-				continue nextEntry
+				if options.FollowSymlinks && fi.Mode()&os.ModeType == os.ModeSymlink {
+					realPath, err := filepath.EvalSymlinks(fullpath)
+					if err != nil {
+						errorLogger.Printf("cannot follow symlink '%s': %s\n", fullpath, err)
+					} else {
+						realFi, err := os.Stat(realPath)
+						if err != nil {
+							errorLogger.Printf("cannot follow symlink '%s': %s\n", fullpath, err)
+						}
+						if realFi.IsDir() {
+							enqueueDirectory(realPath)
+							continue nextEntry
+						} else {
+							if realFi.Mode()&os.ModeType != 0 {
+								continue nextEntry
+							}
+						}
+					}
+				} else {
+					continue nextEntry
+				}
 			}
 
 			// check file path options

@@ -61,6 +61,7 @@ type Options struct {
 	ExcludeTypes       string   `short:"T" long:"no-type" description:"exclude specific file types (comma-separated, --list-types)" default-mask:"-"`
 	FilesWithMatches   bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
 	FilesWithoutMatch  bool     `short:"L" long:"files-without-match" description:"list files containing no match"`
+	FollowSymlinks     bool     `long:"follow" description:"follow symlinks"`
 	Git                bool     `long:"git" description:"respect .gitignore files and skip .git directories"`
 	GroupByFile        bool     `long:"group" description:"group output by file (default: off)"`
 	NoGroupByFile      func()   `long:"no-group" description:"do not group output by file" json:"-"`
