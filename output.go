@@ -57,6 +57,12 @@ func printLineno(lineno int64, delim string) {
 	}
 }
 
+func printColumnNo(m *Match) {
+	if options.ShowColumnNumbers {
+		writeOutput("%d:", m.start-m.lineStart+1)
+	}
+}
+
 // printMatch prints the context after the previous match, the context before the match and the match itself
 func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *int64) {
 	var matchOutput = match.line
@@ -174,6 +180,7 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			// first line of multiline match with partial highlighting
 			printFilename(target, ":")
 			printLineno(match.lineno, ":")
+			printColumnNo(&match)
 			writeOutput("%s%s%s%s\n", firstLine[0:firstLineOffset], global.termHighlightMatch,
 				firstLine[firstLineOffset:len(firstLine)], global.termHighlightReset)
 
@@ -195,6 +202,7 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			// single line output in multiline mode or replace option used
 			printFilename(target, ":")
 			printLineno(match.lineno, ":")
+			printColumnNo(&match)
 			writeOutput("%s%s", matchOutput, options.OutputSeparator)
 			*lastPrintedLine = match.lineno + int64(len(lines)-1)
 		}
@@ -202,6 +210,7 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 		// single line output
 		printFilename(target, ":")
 		printLineno(match.lineno, ":")
+		printColumnNo(&match)
 		writeOutput("%s%s", matchOutput, options.OutputSeparator)
 		*lastPrintedLine = match.lineno
 	}
