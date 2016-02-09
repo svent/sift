@@ -102,6 +102,7 @@ type Options struct {
 	WriteConfig         bool   `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
 	Zip                 bool   `short:"z" long:"zip" description:"search content of compressed .gz files (default: off)"`
 	NoZip               func() `short:"Z" long:"no-zip" description:"do not search content of compressed .gz files" json:"-"`
+	SniffZip            bool   `long:"sniff" description:"sniff files and uncompress based on content"`
 
 	FileConditions struct {
 		FileMatches     []string `long:"file-matches" description:"only show matches if file also matches PATTERN" value-name:"PATTERN"`

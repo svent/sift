@@ -17,6 +17,8 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"compress/bzip2"
 	"compress/gzip"
 	"errors"
 	"fmt"
@@ -428,6 +430,30 @@ func processFileTargets() {
 		} else if infile == os.Stdin && options.Multiline {
 			reader = nbreader.NewNBReader(infile, InputBlockSize,
 				nbreader.ChunkTimeout(MultilinePipeChunkTimeout), nbreader.Timeout(MultilinePipeTimeout))
+		} else if options.SniffZip {
+			rawReader := infile
+			var b [4]byte
+			_, err := io.ReadAtLeast(infile, b[:], 3)
+			infile.Seek(0, 0)
+			reader = infile
+			if err != nil {
+				errorLogger.Printf("error reading file '%s'\n", infile.Name())
+			} else {
+				if b[0] == 0x1f && b[1] == 0x8b && b[2] == 8 { // gzip
+					reader, err = gzip.NewReader(rawReader)
+				} else if b[0] == 'B' && b[1] == 'Z' { // bzip2
+					reader = bzip2.NewReader(rawReader)
+					// as bzip2.Reader checks only on the first read, read the first byte here
+					if _, err = reader.Read(b[:1]); err == nil {
+						reader = io.MultiReader(bytes.NewReader(b[:1]), reader)
+					}
+				}
+				if err != nil {
+					errorLogger.Printf("error decompressing file '%s', opening as normal file\n", infile.Name())
+					infile.Seek(0, 0)
+					reader = infile
+				}
+			}
 		} else {
 			reader = infile
 		}
