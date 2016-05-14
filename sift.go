@@ -384,6 +384,9 @@ func checkShebang(regex *regexp.Regexp, filepath string) (bool, error) {
 		return false, err
 	}
 	b, err := bufio.NewReader(f).ReadBytes('\n')
+	if err != nil {
+		return false, err
+	}
 	return regex.Match(b), nil
 }
 
