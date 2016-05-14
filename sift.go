@@ -384,6 +384,9 @@ func checkShebang(regex *regexp.Regexp, filepath string) (bool, error) {
 		return false, err
 	}
 	b, err := bufio.NewReader(f).ReadBytes('\n')
+	if err != nil {
+		return false, err
+	}
 	return regex.Match(b), nil
 }
 
@@ -635,7 +638,7 @@ func main() {
 		}
 		if len(args) > 0 && !options.TargetsOnly {
 			global.matchPatterns = append(global.matchPatterns, args[0])
-			args = args[1:len(args)]
+			args = args[1:]
 		}
 	}
 
@@ -647,7 +650,7 @@ func main() {
 			targets = []string{"."}
 		}
 	} else {
-		targets = args[0:len(args)]
+		targets = args[0:]
 	}
 
 	// expand arguments containing patterns on Windows

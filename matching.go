@@ -198,7 +198,7 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 		if len(newMatches) > 0 {
 			// if a list option is used exit here if possible
 			if (options.FilesWithMatches || options.FilesWithoutMatch) && !options.Count && len(global.conditions) == 0 {
-				global.resultsChan <- &Result{target: target, matches: []Match{Match{}}}
+				global.resultsChan <- &Result{target: target, matches: []Match{{}}}
 				return nil
 			}
 
@@ -622,7 +622,7 @@ func processReaderInvertMatch(reader io.Reader, matchRegexes []*regexp.Regexp, t
 		}
 		if !matchFound {
 			if options.FilesWithMatches || options.FilesWithoutMatch {
-				global.resultsChan <- &Result{matches: []Match{Match{}}, target: target}
+				global.resultsChan <- &Result{matches: []Match{{}}, target: target}
 				return nil
 			}
 			m := Match{

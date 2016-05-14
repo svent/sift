@@ -182,7 +182,7 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			printLineno(match.lineno, ":")
 			printColumnNo(&match)
 			writeOutput("%s%s%s%s\n", firstLine[0:firstLineOffset], global.termHighlightMatch,
-				firstLine[firstLineOffset:len(firstLine)], global.termHighlightReset)
+				firstLine[firstLineOffset:], global.termHighlightReset)
 
 			// lines 2 upto n-1 of multiline match with full highlighting
 			for i := 1; i < len(lines)-1; i++ {
@@ -196,7 +196,7 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			printFilename(target, ":")
 			printLineno(match.lineno+int64(len(lines))-1, ":")
 			writeOutput("%s%s%s%s%s", global.termHighlightMatch, lastLine[0:lastLineOffset],
-				global.termHighlightReset, lastLine[lastLineOffset:len(lastLine)], options.OutputSeparator)
+				global.termHighlightReset, lastLine[lastLineOffset:], options.OutputSeparator)
 			*lastPrintedLine = match.lineno + int64(len(lines)-1)
 		} else {
 			// single line output in multiline mode or replace option used
