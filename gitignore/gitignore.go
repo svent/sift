@@ -387,7 +387,7 @@ func newRegexPattern(base basePattern) patternMatcher {
 	}
 
 	parts := strings.Split(content, "**")
-	for i, _ := range parts {
+	for i := range parts {
 		parts[i] = regexp.QuoteMeta(parts[i])
 	}
 	pattern := strings.Join(parts, ".*?")

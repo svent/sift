@@ -21,60 +21,60 @@ import (
 
 func init() {
 	global.fileTypesMap = map[string]FileType{
-		"go": FileType{
+		"go": {
 			Name:     "go",
 			Patterns: []string{"*.go"},
 		},
-		"cc": FileType{
+		"cc": {
 			Name:     "cc",
 			Patterns: []string{"*.c", "*.h", "*.xs"},
 		},
-		"cpp": FileType{
+		"cpp": {
 			Name:     "cpp",
 			Patterns: []string{"*.cpp", "*.cc", "*.cxx", "*.m", "*.hpp", "*.hh", "*.h", "*.hxx"},
 		},
-		"html": FileType{
+		"html": {
 			Name:     "html",
 			Patterns: []string{"*.htm", "*.html", "*.shtml", "*.xhtml"},
 		},
-		"groovy": FileType{
+		"groovy": {
 			Name:     "groovy",
 			Patterns: []string{"*.groovy", "*.gtmpl", "*.gpp", "*.grunit", "*.gradle"},
 		},
-		"java": FileType{
+		"java": {
 			Name:     "java",
 			Patterns: []string{"*.java", "*.properties"},
 		},
-		"jsp": FileType{
+		"jsp": {
 			Name:     "jsp",
 			Patterns: []string{"*.jsp", "*.jspx", "*.jhtm", "*.jhtml"},
 		},
-		"perl": FileType{
+		"perl": {
 			Name:         "perl",
 			Patterns:     []string{"*.pl", "*.pm", "*.pod", "*.t"},
 			ShebangRegex: regexp.MustCompile(`^#!.*\bperl\b`),
 		},
-		"php": FileType{
+		"php": {
 			Name:         "php",
 			Patterns:     []string{"*.php", "*.phpt", "*.php3", "*.php4", "*.php5", "*.phtml"},
 			ShebangRegex: regexp.MustCompile(`^#!.*\bphp\b`),
 		},
-		"ruby": FileType{
+		"ruby": {
 			Name:         "ruby",
 			Patterns:     []string{"*.rb", "*.rhtml", "*.rjs", "*.rxml", "*.erb", "*.rake", "*.spec", "Rakefile"},
 			ShebangRegex: regexp.MustCompile(`^#!.*\bruby\b`),
 		},
-		"python": FileType{
+		"python": {
 			Name:         "python",
 			Patterns:     []string{"*.py", "*.pyw", "*.pyx", "SConstruct"},
 			ShebangRegex: regexp.MustCompile(`^#!.*\bpython[0-9.]*\b`),
 		},
-		"shell": FileType{
+		"shell": {
 			Name:         "shell",
 			Patterns:     []string{"*.sh", "*.bash", "*.csh", "*.tcsh", "*.ksh", "*.zsh"},
 			ShebangRegex: regexp.MustCompile(`^#!.*\b(?:ba|t?c|k|z)?sh\b`),
 		},
-		"xml": FileType{
+		"xml": {
 			Name:         "xml",
 			Patterns:     []string{"*.xml", "*.dtd", "*.xsl", "*.xslt", "*.ent"},
 			ShebangRegex: regexp.MustCompile(`<\?xml`),

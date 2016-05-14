@@ -635,7 +635,7 @@ func main() {
 		}
 		if len(args) > 0 && !options.TargetsOnly {
 			global.matchPatterns = append(global.matchPatterns, args[0])
-			args = args[1:len(args)]
+			args = args[1:]
 		}
 	}
 
@@ -647,7 +647,7 @@ func main() {
 			targets = []string{"."}
 		}
 	} else {
-		targets = args[0:len(args)]
+		targets = args[0:]
 	}
 
 	// expand arguments containing patterns on Windows
