@@ -31,10 +31,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mattn/go-isatty"
 	"github.com/svent/go-flags"
 	"github.com/svent/go-nbreader"
 	"github.com/svent/sift/gitignore"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 const (
@@ -641,7 +641,7 @@ func main() {
 
 	if len(args) == 0 {
 		// check whether there is input on STDIN
-		if !terminal.IsTerminal(int(os.Stdin.Fd())) {
+		if !isatty.IsTerminal(os.Stdin.Fd()) {
 			targets = []string{"-"}
 		} else {
 			targets = []string{"."}
