@@ -30,6 +30,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
 )
 
@@ -716,6 +717,9 @@ func (o *Options) performAutoDetections(patterns []string, targets []string) {
 		if o.Output == "" {
 			if isatty.IsTerminal(os.Stdout.Fd()) {
 				o.Color = "on"
+				if runtime.GOOS == "windows" {
+					global.outputFile = colorable.NewColorableStdout()
+				}
 			} else {
 				o.Color = "off"
 			}
