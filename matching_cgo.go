@@ -20,7 +20,7 @@ package main
 
 #include <stddef.h>
 
-inline int count_newlines(const unsigned char *buf, size_t n) {
+static inline int count_newlines(const unsigned char *buf, size_t n) {
 	int count = 0;
 	int base;
 	int dist = n / 4;
@@ -47,7 +47,7 @@ inline int count_newlines(const unsigned char *buf, size_t n) {
 	return count;
 }
 
-inline void bytes_to_lower(const unsigned char *buf, unsigned char *out, size_t n) {
+static inline void bytes_to_lower(const unsigned char *buf, unsigned char *out, size_t n) {
 	int base;
 	int dist = n / 4;
 	for (int i = 0; i < dist; i++) {
