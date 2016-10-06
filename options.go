@@ -40,6 +40,7 @@ type Options struct {
 	Color               string
 	ColorFunc           func()   `long:"color" description:"enable colored output (default: auto)" json:"-"`
 	NoColorFunc         func()   `long:"no-color" description:"disable colored output" json:"-"`
+	ConfigFile          string   `long:"conf" description:"load config file FILE" value-name:"FILE" json:"-"`
 	Context             int      `short:"C" long:"context" description:"show NUM context lines" value-name:"NUM" json:"-"`
 	ContextAfter        int      `short:"A" long:"context-after" description:"show NUM context lines after match" value-name:"NUM" json:"-"`
 	ContextBefore       int      `short:"B" long:"context-before" description:"show NUM context lines before match" value-name:"NUM" json:"-"`
@@ -250,27 +251,42 @@ func (o *Options) LoadDefaults() {
 	}
 }
 
+// loadConfigFile loads options from the given config file.
+func (o *Options) loadConfigFile(configFilePath string, label string) {
+	configFile, err := ioutil.ReadFile(configFilePath)
+	if err == nil && len(configFile) > 0 {
+		if err := json.Unmarshal(configFile, &o); err != nil {
+			errorLogger.Printf("cannot parse %s '%s': %s\n", label, configFilePath, err)
+		}
+	}
+	if err != nil {
+		errorLogger.Printf("cannot open %s '%s': %s\n", label, configFilePath, err)
+	}
+}
+
 // LoadConfigs tries to load options from sift config files.
-func (o *Options) LoadConfigs() {
-	// load config from global sift config if file exists
-	if homedir := getHomeDir(); homedir != "" {
-		configFilePath := filepath.Join(homedir, SiftConfigFile)
-		configFile, err := ioutil.ReadFile(configFilePath)
-		if err == nil && len(configFile) > 0 {
-			if err := json.Unmarshal(configFile, &o); err != nil {
-				errorLogger.Printf("cannot parse global config '%s': %s\n", configFilePath, err)
+// if noConf is true, only a config file set via option --conf will be parsed.
+func (o *Options) LoadConfigs(noConf bool, configFileArg string) {
+	if !noConf {
+		// load config from global sift config if file exists
+		if homedir := getHomeDir(); homedir != "" {
+			configFilePath := filepath.Join(homedir, SiftConfigFile)
+			if _, err := os.Stat(configFilePath); err == nil {
+				o.loadConfigFile(configFilePath, "global config")
+			}
+		}
+
+		// load config from local sift config if file exists
+		if configFilePath := findLocalConfig(); configFilePath != "" {
+			if _, err := os.Stat(configFilePath); err == nil {
+				o.loadConfigFile(configFilePath, "local config")
 			}
 		}
 	}
 
-	// load config from local sift config if file exists
-	if configFilePath := findLocalConfig(); configFilePath != "" {
-		configFile, err := ioutil.ReadFile(configFilePath)
-		if err == nil && len(configFile) > 0 {
-			if err := json.Unmarshal(configFile, &o); err != nil {
-				errorLogger.Printf("cannot parse local config '%s': %s\n", configFilePath, err)
-			}
-		}
+	// load config from config option
+	if configFileArg != "" {
+		o.loadConfigFile(configFileArg, "config")
 	}
 }
 

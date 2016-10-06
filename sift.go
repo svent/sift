@@ -586,7 +586,7 @@ func main() {
 		"  sift [OPTIONS] [-e PATTERN | -f FILE] [FILE|PATH|tcp://HOST:PORT]...\n" +
 		"  sift [OPTIONS] --targets [FILE|PATH]..."
 
-	// temporarily parse options to see if the --no-conf option was used and
+	// temporarily parse options to see if the --no-conf/--conf options were used and
 	// then discard the result
 	options.LoadDefaults()
 	args, err = parser.Parse()
@@ -599,14 +599,13 @@ func main() {
 			os.Exit(2)
 		}
 	}
-	loadConfig := !options.NoConfig
+	noConf := options.NoConfig
+	configFile := options.ConfigFile
 	options = Options{}
 
-	// perform full option parsing respecting the --no-conf option
+	// perform full option parsing respecting the --no-conf/--conf options
 	options.LoadDefaults()
-	if loadConfig {
-		options.LoadConfigs()
-	}
+	options.LoadConfigs(noConf, configFile)
 	args, err = parser.Parse()
 	if err != nil {
 		errorLogger.Println(err)
