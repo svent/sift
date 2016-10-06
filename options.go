@@ -60,6 +60,7 @@ type Options struct {
 	ExcludeIPath        string   `long:"exclude-ipath" description:"do not search files whose path matches PATTERN (case insensitive)" value-name:"PATTERN" default-mask:"-"`
 	IncludeTypes        string   `short:"t" long:"type" description:"limit search to specific file types (comma-separated, see --list-types)" default-mask:"-"`
 	ExcludeTypes        string   `short:"T" long:"no-type" description:"exclude specific file types (comma-separated, --list-types)" default-mask:"-"`
+	FieldSeparator      string   `long:"field-sep" description:"column separator (default: \":\")" default-mask:"-"`
 	FilesWithMatches    bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
 	FilesWithoutMatch   bool     `short:"L" long:"files-without-match" description:"list files containing no match"`
 	FollowSymlinks      bool     `long:"follow" description:"follow symlinks"`
@@ -172,6 +173,7 @@ func findLocalConfig() string {
 func (o *Options) LoadDefaults() {
 	o.Cores = runtime.NumCPU()
 	o.OutputSeparator = ""
+	o.FieldSeparator = ":"
 	o.ShowFilename = "auto"
 	o.Color = "auto"
 	o.Recursive = true

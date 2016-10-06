@@ -59,7 +59,7 @@ func printLineno(lineno int64, delim string) {
 
 func printColumnNo(m *Match) {
 	if options.ShowColumnNumbers {
-		writeOutput("%d:", m.start-m.lineStart+1)
+		writeOutput("%d"+options.FieldSeparator, m.start-m.lineStart+1)
 	}
 }
 
@@ -178,8 +178,8 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			lastLineOffset := int64(len(lastLine)) - (match.lineEnd - match.end)
 
 			// first line of multiline match with partial highlighting
-			printFilename(target, ":")
-			printLineno(match.lineno, ":")
+			printFilename(target, options.FieldSeparator)
+			printLineno(match.lineno, options.FieldSeparator)
 			printColumnNo(&match)
 			writeOutput("%s%s%s%s\n", firstLine[0:firstLineOffset], global.termHighlightMatch,
 				firstLine[firstLineOffset:len(firstLine)], global.termHighlightReset)
@@ -187,29 +187,29 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			// lines 2 upto n-1 of multiline match with full highlighting
 			for i := 1; i < len(lines)-1; i++ {
 				line := lines[i]
-				printFilename(target, ":")
-				printLineno(match.lineno+int64(i), ":")
+				printFilename(target, options.FieldSeparator)
+				printLineno(match.lineno+int64(i), options.FieldSeparator)
 				writeOutput("%s%s%s\n", global.termHighlightMatch, line, global.termHighlightReset)
 			}
 
 			// last line of multiline match with partial highlighting
-			printFilename(target, ":")
-			printLineno(match.lineno+int64(len(lines))-1, ":")
+			printFilename(target, options.FieldSeparator)
+			printLineno(match.lineno+int64(len(lines))-1, options.FieldSeparator)
 			writeOutput("%s%s%s%s%s", global.termHighlightMatch, lastLine[0:lastLineOffset],
 				global.termHighlightReset, lastLine[lastLineOffset:len(lastLine)], options.OutputSeparator)
 			*lastPrintedLine = match.lineno + int64(len(lines)-1)
 		} else {
 			// single line output in multiline mode or replace option used
-			printFilename(target, ":")
-			printLineno(match.lineno, ":")
+			printFilename(target, options.FieldSeparator)
+			printLineno(match.lineno, options.FieldSeparator)
 			printColumnNo(&match)
 			writeOutput("%s%s", matchOutput, options.OutputSeparator)
 			*lastPrintedLine = match.lineno + int64(len(lines)-1)
 		}
 	} else {
 		// single line output
-		printFilename(target, ":")
-		printLineno(match.lineno, ":")
+		printFilename(target, options.FieldSeparator)
+		printLineno(match.lineno, options.FieldSeparator)
 		printColumnNo(&match)
 		writeOutput("%s%s", matchOutput, options.OutputSeparator)
 		*lastPrintedLine = match.lineno
@@ -253,11 +253,11 @@ func printResult(result *Result) {
 		}
 		if options.FilesWithMatches {
 			if matchCount > 0 {
-				writeOutput("%s:%d\n", target, matchCount)
+				writeOutput("%s"+options.FieldSeparator+"%d\n", target, matchCount)
 			}
 		} else {
 			if options.ShowFilename == "on" {
-				writeOutput("%s:", target)
+				writeOutput("%s"+options.FieldSeparator, target)
 			}
 			writeOutput("%d\n", matchCount)
 		}
