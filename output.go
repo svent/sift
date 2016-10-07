@@ -63,6 +63,16 @@ func printColumnNo(m *Match) {
 	}
 }
 
+func printByteOffset(m *Match) {
+	if options.ShowByteOffset {
+		if options.OnlyMatching {
+			writeOutput("%d"+options.FieldSeparator, m.start)
+		} else {
+			writeOutput("%d"+options.FieldSeparator, m.lineStart)
+		}
+	}
+}
+
 // printMatch prints the context after the previous match, the context before the match and the match itself
 func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *int64) {
 	var matchOutput = match.line
@@ -181,6 +191,7 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			printFilename(target, options.FieldSeparator)
 			printLineno(match.lineno, options.FieldSeparator)
 			printColumnNo(&match)
+			printByteOffset(&match)
 			writeOutput("%s%s%s%s\n", firstLine[0:firstLineOffset], global.termHighlightMatch,
 				firstLine[firstLineOffset:len(firstLine)], global.termHighlightReset)
 
@@ -203,6 +214,7 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 			printFilename(target, options.FieldSeparator)
 			printLineno(match.lineno, options.FieldSeparator)
 			printColumnNo(&match)
+			printByteOffset(&match)
 			writeOutput("%s%s", matchOutput, options.OutputSeparator)
 			*lastPrintedLine = match.lineno + int64(len(lines)-1)
 		}
@@ -211,6 +223,7 @@ func printMatch(match Match, lastMatch Match, target string, lastPrintedLine *in
 		printFilename(target, options.FieldSeparator)
 		printLineno(match.lineno, options.FieldSeparator)
 		printColumnNo(&match)
+		printByteOffset(&match)
 		writeOutput("%s%s", matchOutput, options.OutputSeparator)
 		*lastPrintedLine = match.lineno
 	}

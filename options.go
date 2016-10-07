@@ -96,6 +96,8 @@ type Options struct {
 	NoShowLineNumbers   func() `short:"N" long:"no-line-number" description:"do not show line numbers" json:"-"`
 	ShowColumnNumbers   bool   `long:"column" description:"show column numbers"`
 	NoShowColumnNumbers func() `long:"no-column" description:"do not show column numbers" json:"-"`
+	ShowByteOffset      bool   `long:"byte-offset" description:"show the byte offset before each output line"`
+	NoShowByteOffset    func() `long:"no-byte-offset" description:"do not show the byte offset before each output line" json:"-"`
 	Stats               bool   `long:"stats" description:"show statistics"`
 	TargetsOnly         bool   `long:"targets" description:"only list selected files, do not search"`
 	ListTypes           func() `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
@@ -210,6 +212,9 @@ func (o *Options) LoadDefaults() {
 	}
 	o.NoShowColumnNumbers = func() {
 		o.ShowColumnNumbers = false
+	}
+	o.NoShowByteOffset = func() {
+		o.ShowByteOffset = false
 	}
 	o.NoZip = func() {
 		o.Zip = false
