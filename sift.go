@@ -74,7 +74,6 @@ type Condition struct {
 }
 
 type FileType struct {
-	Name         string
 	Patterns     []string
 	ShebangRegex *regexp.Regexp
 }
@@ -629,7 +628,8 @@ func main() {
 		}
 	}
 	if len(global.matchPatterns) == 0 {
-		if len(args) == 0 && !(options.PrintConfig || options.WriteConfig || options.TargetsOnly) {
+		if len(args) == 0 && !(options.PrintConfig || options.WriteConfig ||
+			options.TargetsOnly || options.ListTypes) {
 			errorLogger.Fatalln("No pattern given. Try 'sift --help' for more information.")
 		}
 		if len(args) > 0 && !options.TargetsOnly {

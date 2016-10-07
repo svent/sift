@@ -59,7 +59,10 @@ type Options struct {
 	ExcludePath         string   `long:"exclude-path" description:"do not search files whose path matches PATTERN" value-name:"PATTERN" default-mask:"-"`
 	ExcludeIPath        string   `long:"exclude-ipath" description:"do not search files whose path matches PATTERN (case insensitive)" value-name:"PATTERN" default-mask:"-"`
 	IncludeTypes        string   `short:"t" long:"type" description:"limit search to specific file types (comma-separated, see --list-types)" default-mask:"-"`
-	ExcludeTypes        string   `short:"T" long:"no-type" description:"exclude specific file types (comma-separated, --list-types)" default-mask:"-"`
+	ExcludeTypes        string   `short:"T" long:"no-type" description:"exclude specific file types (comma-separated, see --list-types)" default-mask:"-"`
+	AddCustomTypes      []string `long:"add-type" description:"add custom type (see --list-types for format)" default-mask:"-" json:"-"`
+	DelCustomTypes      []string `long:"del-type" description:"remove custom type" default-mask:"-" json:"-"`
+	CustomTypes         map[string]string
 	FieldSeparator      string   `long:"field-sep" description:"column separator (default: \":\")" default-mask:"-"`
 	FilesWithMatches    bool     `short:"l" long:"files-with-matches" description:"list files containing matches"`
 	FilesWithoutMatch   bool     `short:"L" long:"files-without-match" description:"list files containing no match"`
@@ -100,7 +103,7 @@ type Options struct {
 	NoShowByteOffset    func() `long:"no-byte-offset" description:"do not show the byte offset before each output line" json:"-"`
 	Stats               bool   `long:"stats" description:"show statistics"`
 	TargetsOnly         bool   `long:"targets" description:"only list selected files, do not search"`
-	ListTypes           func() `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
+	ListTypes           bool   `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
 	Version             func() `short:"V" long:"version" description:"show version and license information" json:"-"`
 	WordRegexp          bool   `short:"w" long:"word-regexp" description:"only match on ASCII word boundaries"`
 	WriteConfig         bool   `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
@@ -171,6 +174,36 @@ func findLocalConfig() string {
 	return ""
 }
 
+// func listTypes list the available types (built-in and custom) and exits.
+func listTypes() {
+	fmt.Println("The following list shows all file types supported.")
+	fmt.Println("Use --type/--no-type to include/exclude file types.")
+	fmt.Println("")
+	var types []string
+	for t := range global.fileTypesMap {
+		types = append(types, t)
+	}
+	sort.Strings(types)
+	for _, e := range types {
+		t := global.fileTypesMap[e]
+		var shebang string
+		if t.ShebangRegex != nil {
+			shebang = fmt.Sprintf("or first line matches /%s/", t.ShebangRegex)
+		}
+		fmt.Printf("%-15s:%s %s\n", e, strings.Join(t.Patterns, " "), shebang)
+	}
+	fmt.Println("")
+	fmt.Println(`Custom types can be added with --add-type.`)
+	fmt.Println(`Example matching *.rb, *.erb, Rakefile and all files whose first line matches the regular expression /\bruby\b/:`)
+	fmt.Println(`sift --add-type 'ruby=*.rb,*.erb,Rakefile;\bruby\b'`)
+	fmt.Println(`Write the definition to the config file:`)
+	fmt.Println(`sift --add-type 'ruby=*.rb,*.erb,Rakefile;\bruby\b' --write-config`)
+	fmt.Println(`Remove the definition from the config file:`)
+	fmt.Println(`sift --del-type ruby --write-config`)
+	fmt.Println("")
+	os.Exit(0)
+}
+
 // LoadDefaults sets default options.
 func (o *Options) LoadDefaults() {
 	o.Cores = runtime.NumCPU()
@@ -179,6 +212,7 @@ func (o *Options) LoadDefaults() {
 	o.ShowFilename = "auto"
 	o.Color = "auto"
 	o.Recursive = true
+	o.CustomTypes = make(map[string]string)
 
 	o.ColorFunc = func() {
 		o.Color = "on"
@@ -236,26 +270,6 @@ func (o *Options) LoadDefaults() {
 		fmt.Println("along with this program. If not, see <http://www.gnu.org/licenses/>.")
 		os.Exit(0)
 	}
-
-	o.ListTypes = func() {
-		fmt.Println("The following list shows all file types supported.")
-		fmt.Println("Use --type/--no-type to include/exclude file types.")
-		fmt.Println("")
-		var types []string
-		for t := range global.fileTypesMap {
-			types = append(types, t)
-		}
-		sort.Strings(types)
-		for _, e := range types {
-			t := global.fileTypesMap[e]
-			var shebang string
-			if t.ShebangRegex != nil {
-				shebang = fmt.Sprintf(" or first line matches /%s/", t.ShebangRegex)
-			}
-			fmt.Printf("%-15s%s%s\n", t.Name+":", strings.Join(t.Patterns, " "), shebang)
-		}
-		os.Exit(0)
-	}
 }
 
 // loadConfigFile loads options from the given config file.
@@ -299,6 +313,10 @@ func (o *Options) LoadConfigs(noConf bool, configFileArg string) {
 
 // Apply processes user provided options
 func (o *Options) Apply(patterns []string, targets []string) error {
+	if err := o.processTypes(); err != nil {
+		return err
+	}
+
 	if err := o.checkFormats(); err != nil {
 		return err
 	}
@@ -332,6 +350,47 @@ func (o *Options) Apply(patterns []string, targets []string) error {
 	}
 
 	runtime.GOMAXPROCS(o.Cores)
+	return nil
+}
+
+// processTypes processes custom types defined on the command line
+// or in the config file.
+func (o *Options) processTypes() error {
+	for _, e := range o.DelCustomTypes {
+		if _, ok := o.CustomTypes[e]; !ok {
+			return fmt.Errorf("No custom type definition for '%s' found", e)
+		}
+		delete(o.CustomTypes, e)
+	}
+
+	for _, e := range o.AddCustomTypes {
+		s := strings.SplitN(e, "=", 2)
+		if len(s) != 2 {
+			return fmt.Errorf("wrong format for type definition '%s'", e)
+		}
+		o.CustomTypes[s[0]] = s[1]
+	}
+
+	// parse type definition, e.g. '*.pl,*.pm;\bperl\b'
+	for name, e := range o.CustomTypes {
+		var ft FileType
+		s := strings.SplitN(e, ";", 2)
+		if len(s) == 2 && s[1] != "" {
+			re, err := regexp.Compile(s[1])
+			if err != nil {
+				return fmt.Errorf("cannot parse regular expression '%s' for custom type '%s': %s", s[1], name, err)
+			}
+			ft.ShebangRegex = re
+		}
+		patterns := strings.Split(s[0], ",")
+		ft.Patterns = patterns
+		global.fileTypesMap[name] = ft
+	}
+
+	if o.ListTypes {
+		listTypes()
+	}
+
 	return nil
 }
 
