@@ -2,6 +2,37 @@
 
 A fast and powerful open source alternative to grep.
 
+
+## Features
+
+sift has a slightly different focus than most other grep alternatives. Code search, log search / digital forensics and data processing are the main use cases, but the primary goal is to provide safe defaults and to make it easily configurable for a specific use case. Among the features are:
+
+* Stable releases, cross platform support
+* Safe defaults: sift searches everywhere if not configured otherwise
+* Complete & working .gitignore support
+* High [performance](https://sift-tool.org/performance) for many uses cases
+* Support for adding custom file types to narrow down searches
+* Multiline support
+* Support for big files: >50GB, >5,000,000,000 lines and >5,000,000,000 matches successfully tested
+
+Sift allows easy customization.
+Example: Configure sift to
+* Ignore case
+* Show line numbers
+* Skip binary files
+* Respect .gitignore files:
+
+```sift -i -n --binary-skip --git --write-config```
+
+The configuration can be overridden for specific directories.
+
+sift understands **conditions** to process complex formats or support code audits.
+
+Example: Search for ```.php``` files containing a call to mysql_query, that is preceded by ```$_GET``` or ```$_POST``` (accessing external input), but the preceding 5 lines do not contain a call to an escape function:
+
+```sift -x php mysql_query --preceded-within "5:_(GET|POST)" --not-preceded-within "5:escape"```
+
+
 Please go to [sift-tool.org](https://sift-tool.org) for more information.
 
 
