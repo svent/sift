@@ -289,6 +289,12 @@ func (o *Options) loadConfigFile(configFilePath string, label string) {
 // if noConf is true, only a config file set via option --conf will be parsed.
 func (o *Options) LoadConfigs(noConf bool, configFileArg string) {
 	if !noConf {
+		if runtime.GOOS != "windows" {
+			// load system wide config if file exists
+			if _, err := os.Stat("/etc/sift.conf"); err == nil {
+				o.loadConfigFile("/etc/sift.conf", "system config")
+			}
+		}
 		// load config from global sift config if file exists
 		if homedir := getHomeDir(); homedir != "" {
 			configFilePath := filepath.Join(homedir, SiftConfigFile)
