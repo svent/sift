@@ -289,11 +289,17 @@ func (o *Options) loadConfigFile(configFilePath string, label string) {
 // if noConf is true, only a config file set via option --conf will be parsed.
 func (o *Options) LoadConfigs(noConf bool, configFileArg string) {
 	if !noConf {
+		if runtime.GOOS != "windows" {
+			// load system wide config if file exists
+			if _, err := os.Stat("/etc/sift.conf"); err == nil {
+				o.loadConfigFile("/etc/sift.conf", "system config")
+			}
+		}
 		// load config from global sift config if file exists
 		if homedir := getHomeDir(); homedir != "" {
 			configFilePath := filepath.Join(homedir, SiftConfigFile)
 			if _, err := os.Stat(configFilePath); err == nil {
-				o.loadConfigFile(configFilePath, "global config")
+				o.loadConfigFile(configFilePath, "user config")
 			}
 		}
 
@@ -703,9 +709,13 @@ func (o *Options) checkCompatibility(patterns []string, targets []string) error 
 // processConfigOptions processes the options --print-config and --write-config
 func (o *Options) processConfigOptions() error {
 	if o.PrintConfig {
+		if runtime.GOOS != "windows" {
+			// load system wide config if file exists
+			fmt.Fprintf(os.Stderr, "System config file path: %s\n", "/etc/sift.conf")
+		}
 		if homedir := getHomeDir(); homedir != "" {
 			globalConfigFilePath := filepath.Join(homedir, SiftConfigFile)
-			fmt.Fprintf(os.Stderr, "Global config file path: %s\n", globalConfigFilePath)
+			fmt.Fprintf(os.Stderr, "User config file path: %s\n", globalConfigFilePath)
 		} else {
 			errorLogger.Println("could not detect user home directory.")
 		}
