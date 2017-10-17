@@ -59,9 +59,9 @@ Or build and install sift from source at https://github.com/svent/sift:
 $ yaourt -S sift
 ```
 
-#### OS X
+#### OS X / Any Linux
 
-Using [Homebrew](http://brew.sh/):
+Using [Homebrew](http://brew.sh/) or [Linuxbrew](http://linuxbrew.sh/):
 
 ```sh
 $ brew install sift
