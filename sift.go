@@ -34,6 +34,7 @@ import (
 	"github.com/svent/go-flags"
 	"github.com/svent/go-nbreader"
 	"github.com/svent/sift/gitignore"
+  "github.com/Datadog/zstd"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -419,6 +420,14 @@ func processFileTargets() {
 		if options.Zip && strings.HasSuffix(filepath, ".gz") {
 			rawReader := infile
 			reader, err = gzip.NewReader(rawReader)
+			if err != nil {
+				errorLogger.Printf("error decompressing file '%s', opening as normal file\n", infile.Name())
+				infile.Seek(0, 0)
+				reader = infile
+			}
+    } else if options.Zip && strings.HasSuffix(filepath, ".zst") {
+			rawReader := infile
+			reader = zstd.NewReader(rawReader)
 			if err != nil {
 				errorLogger.Printf("error decompressing file '%s', opening as normal file\n", infile.Name())
 				infile.Seek(0, 0)
