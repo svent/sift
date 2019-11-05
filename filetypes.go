@@ -50,6 +50,9 @@ func init() {
 			Patterns:     []string{"*.php", "*.phpt", "*.php3", "*.php4", "*.php5", "*.phtml"},
 			ShebangRegex: regexp.MustCompile(`^#!.*\bphp\b`),
 		},
+		"pwsh": FileType{
+			Patterns: []string{"*.ps1", "*.psm1"},
+		},
 		"ruby": FileType{
 			Patterns:     []string{"*.rb", "*.rhtml", "*.rjs", "*.rxml", "*.erb", "*.rake", "*.spec", "Rakefile"},
 			ShebangRegex: regexp.MustCompile(`^#!.*\bruby\b`),
