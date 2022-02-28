@@ -21,6 +21,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"regexp/syntax"
 	"sort"
 )
 
@@ -171,6 +172,24 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 						validMatch = true
 					}
 				}
+				// work around the regexp engine when searching for a word flanked by word boundaries: \bWORD\b.
+				// When -w is set, omit the leading word boundary \b in the hope that WORD starts with a string literal,
+				// which can be quickly searched for before entering the slower regex engine.
+				// Enforce the leading word boundary requirement here. \b == \A\w or \W\w or \w\W or \w\z
+				// \w\z is out as a possibility because the pattern has a trailing \b
+				if options.WordRegexp && validMatch {
+					if syntax.IsWordChar(rune(newMatches[i].line[newMatches[i].start-newMatches[i].lineStart])) {
+						// \A\w or \W\w
+						if !(newMatches[i].start == newMatches[i].lineStart || !syntax.IsWordChar(rune(newMatches[i].line[newMatches[i].start-1-newMatches[i].lineStart]))) {
+							validMatch = false
+						}
+					} else {
+						// \w\W
+						if !(newMatches[i].start > newMatches[i].lineStart && syntax.IsWordChar(rune(newMatches[i].line[newMatches[i].start-1-newMatches[i].lineStart]))) {
+							validMatch = false
+						}
+					}
+				}
 				if validMatch {
 					prevMatch = &newMatches[i]
 					i++
@@ -256,13 +275,16 @@ func getMatches(regex *regexp.Regexp, data []byte, testBuffer []byte, offset int
 			// analyze match and reject false matches
 			if !options.Multiline {
 				// remove newlines at the beginning of the match
+				skip := false
 				for ; start < length && end > start && data[start] == 0x0a; start++ {
+					skip = true
 				}
 				// remove newlines at the end of the match
 				for ; end > 0 && end > start && data[end-1] == 0x0a; end-- {
+					skip = true
 				}
 				// check if the corrected match is still valid
-				if !regex.Match(testBuffer[start:end]) {
+				if skip && !regex.Match(testBuffer[start:end]) {
 					continue
 				}
 				// check if the match contains newlines
