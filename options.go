@@ -25,6 +25,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"regexp/syntax"
 	"runtime"
 	"sort"
 	"strconv"
@@ -106,6 +107,7 @@ type Options struct {
 	ListTypes           bool   `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
 	Version             func() `short:"V" long:"version" description:"show version and license information" json:"-"`
 	WordRegexp          bool   `short:"w" long:"word-regexp" description:"only match on ASCII word boundaries"`
+	CompletePattern     string
 	WriteConfig         bool   `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
 	Zip                 bool   `short:"z" long:"zip" description:"search content of compressed .gz files (default: off)"`
 	NoZip               func() `short:"Z" long:"no-zip" description:"do not search content of compressed .gz files" json:"-"`
@@ -498,6 +500,21 @@ func (o *Options) checkFormats() error {
 	return nil
 }
 
+// isPrefixStringLiteral determines whether all matches for the regexp must start with a string literal.
+func isPrefixStringLiteral(exp string) bool {
+	re, err := syntax.Parse(exp, syntax.Perl)
+	if err != nil {
+		return false
+	}
+	re = re.Simplify()
+	prog, err := syntax.Compile(re)
+	if err != nil {
+		return false
+	}
+	prefix, _ := prog.Prefix()
+	return len(prefix) > 0
+}
+
 // preparePattern adjusts a pattern to respect the ignore-case, literal and multiline options
 func (o *Options) preparePattern(pattern string) string {
 	if o.Literal {
@@ -507,11 +524,19 @@ func (o *Options) preparePattern(pattern string) string {
 		pattern = strings.ToLower(pattern)
 	}
 	if o.WordRegexp {
-		pattern = `\b` + pattern + `\b`
+		// detect string literal to see if pattern without leading \b can use the fast path
+		if isPrefixStringLiteral(pattern) {
+			o.CompletePattern = `\b` + pattern + `\b`
+			pattern = pattern + `\b`
+		} else {
+			pattern = `\b` + pattern + `\b`
+		}
 	}
 	pattern = "(?m)" + pattern
+	o.CompletePattern = "(?m)" + o.CompletePattern
 	if o.Multiline {
 		pattern = "(?s)" + pattern
+		o.CompletePattern = "(?s)" + o.CompletePattern
 	}
 	return pattern
 }
