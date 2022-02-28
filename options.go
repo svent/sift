@@ -106,6 +106,7 @@ type Options struct {
 	ListTypes           bool   `long:"list-types" description:"list available file types" json:"-" default-mask:"-"`
 	Version             func() `short:"V" long:"version" description:"show version and license information" json:"-"`
 	WordRegexp          bool   `short:"w" long:"word-regexp" description:"only match on ASCII word boundaries"`
+	OrigPattern         string
 	WriteConfig         bool   `long:"write-config" description:"save config for loaded configs + given command line arguments" json:"-"`
 	Zip                 bool   `short:"z" long:"zip" description:"search content of compressed .gz files (default: off)"`
 	NoZip               func() `short:"Z" long:"no-zip" description:"do not search content of compressed .gz files" json:"-"`
@@ -498,6 +499,13 @@ func (o *Options) checkFormats() error {
 	return nil
 }
 
+// mightBeSpecialRegexChar indicates whether a character could be a special regex character (ie not a string literal) if
+// it occurs first in a regex expression.
+func mightBeSpecialRegexChar(r rune) bool {
+	return r == '\\' || r == '^' || r == '$' || r == '.' || r == '|' || r == '*' || r == '+' ||
+		r == '(' || r == '[' || r == '{' || r == ')' || r == ']' || r == '}' || r == '?'
+}
+
 // preparePattern adjusts a pattern to respect the ignore-case, literal and multiline options
 func (o *Options) preparePattern(pattern string) string {
 	if o.Literal {
@@ -507,11 +515,19 @@ func (o *Options) preparePattern(pattern string) string {
 		pattern = strings.ToLower(pattern)
 	}
 	if o.WordRegexp {
-		pattern = `\b` + pattern + `\b`
+		// poor man's string literal detector
+		if len(pattern) > 0 && !mightBeSpecialRegexChar(rune(pattern[0])) {
+			o.OrigPattern = `\b` + pattern + `\b`
+			pattern = pattern + `\b`
+		} else {
+			pattern = `\b` + pattern + `\b`
+		}
 	}
 	pattern = "(?m)" + pattern
+	o.OrigPattern = "(?m)" + o.OrigPattern
 	if o.Multiline {
 		pattern = "(?s)" + pattern
+		o.OrigPattern = "(?s)" + o.OrigPattern
 	}
 	return pattern
 }

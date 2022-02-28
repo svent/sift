@@ -171,6 +171,15 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 						validMatch = true
 					}
 				}
+				// work around the regexp engine when searching for a word flanked by word boundaries: \bWORD\b.
+				// When -w is set and WORD starts with a string literal, omit the leading word boundary \b in the first pass.
+				// First Pass: WORD\b
+				// String literals are often more quickly searched for before entering the slower regex engine.
+				// Enforce the leading word boundary requirement in a second pass here.
+				// Second Pass: \bWORD\b
+				if len(options.OrigPattern) > 0 && validMatch {
+					validMatch, _ = regexp.MatchString(options.OrigPattern, newMatches[i].line)
+				}
 				if validMatch {
 					prevMatch = &newMatches[i]
 					i++
