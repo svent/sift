@@ -507,7 +507,7 @@ func (o *Options) preparePattern(pattern string) string {
 		pattern = strings.ToLower(pattern)
 	}
 	if o.WordRegexp {
-		pattern = `\b` + pattern + `\b`
+		pattern = pattern + `\b`
 	}
 	pattern = "(?m)" + pattern
 	if o.Multiline {
