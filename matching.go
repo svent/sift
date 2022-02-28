@@ -256,13 +256,16 @@ func getMatches(regex *regexp.Regexp, data []byte, testBuffer []byte, offset int
 			// analyze match and reject false matches
 			if !options.Multiline {
 				// remove newlines at the beginning of the match
+				skip := false
 				for ; start < length && end > start && data[start] == 0x0a; start++ {
+					skip = true
 				}
 				// remove newlines at the end of the match
 				for ; end > 0 && end > start && data[end-1] == 0x0a; end-- {
+					skip = true
 				}
 				// check if the corrected match is still valid
-				if !regex.Match(testBuffer[start:end]) {
+				if skip && !regex.Match(testBuffer[start:end]) {
 					continue
 				}
 				// check if the match contains newlines
