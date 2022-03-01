@@ -171,6 +171,14 @@ func processReader(reader io.Reader, matchRegexes []*regexp.Regexp, data []byte,
 						validMatch = true
 					}
 				}
+				// When -w is set and all matches for WORD start with a string literal, omit the leading word boundary \b in the first pass.
+				// First Pass: WORD\b
+				// String literals are often more quickly searched for before entering the slower regex engine.
+				// Enforce the leading word boundary requirement in a second pass here.
+				// Second Pass: \bWORD\b
+				if len(options.CompletePattern) > 0 && validMatch {
+					validMatch, _ = regexp.MatchString(options.CompletePattern, newMatches[i].line)
+				}
 				if validMatch {
 					prevMatch = &newMatches[i]
 					i++
@@ -256,13 +264,16 @@ func getMatches(regex *regexp.Regexp, data []byte, testBuffer []byte, offset int
 			// analyze match and reject false matches
 			if !options.Multiline {
 				// remove newlines at the beginning of the match
+				skip := false
 				for ; start < length && end > start && data[start] == 0x0a; start++ {
+					skip = true
 				}
 				// remove newlines at the end of the match
 				for ; end > 0 && end > start && data[end-1] == 0x0a; end-- {
+					skip = true
 				}
 				// check if the corrected match is still valid
-				if !regex.Match(testBuffer[start:end]) {
+				if skip && !regex.Match(testBuffer[start:end]) {
 					continue
 				}
 				// check if the match contains newlines
