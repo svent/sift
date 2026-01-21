@@ -30,7 +30,8 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"github.com/mattn/go-colorable"
+	"github.com/mattn/go-isatty"
 )
 
 type Options struct {
@@ -796,8 +797,11 @@ func (o *Options) performAutoDetections(patterns []string, targets []string) {
 	if o.Color == "auto" {
 		// auto activate colored output only if STDOUT is a terminal
 		if o.Output == "" {
-			if runtime.GOOS != "windows" && terminal.IsTerminal(int(os.Stdout.Fd())) {
+			if isatty.IsTerminal(os.Stdout.Fd()) {
 				o.Color = "on"
+				if runtime.GOOS == "windows" {
+					global.outputFile = colorable.NewColorableStdout()
+				}
 			} else {
 				o.Color = "off"
 			}
@@ -807,7 +811,7 @@ func (o *Options) performAutoDetections(patterns []string, targets []string) {
 	}
 
 	if o.GroupByFile {
-		if !terminal.IsTerminal(int(os.Stdout.Fd())) {
+		if !isatty.IsTerminal(os.Stdout.Fd()) {
 			o.GroupByFile = false
 		}
 	}
