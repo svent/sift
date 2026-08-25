@@ -34,7 +34,7 @@ import (
 )
 
 type Options struct {
-	BinarySkip          bool   `long:"binary-skip" description:"skip files that seem to be binary"`
+	BinarySkip          bool   `short:"b" long:"binary-skip" description:"skip files that seem to be binary"`
 	BinaryAsText        bool   `short:"a" long:"binary-text" description:"process files that seem to be binary as text"`
 	Blocksize           string `long:"blocksize" description:"blocksize in bytes (with optional suffix K|M)"`
 	Color               string
